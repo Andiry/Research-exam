@@ -1,0 +1,44 @@
+\section{\Muse{} and \Switch{}}
+\label{sec:quill-limit}
+
+
+\subsection{Discussion}
+
+In most cases, \Muse{} provides behavior that is indistinguishable
+from standard POSIX file semantics.  There are some differences, however, and
+if applications rely on those details of POSIX behavior, they should not use
+\Muse{} for file access.  Below we describe where \Muse{} and POSIX behavior
+diverge and discuss the impact of POSIX requirements on \Muse{}'s performance.
+
+POSIX supports shared access to files, and \Muse{} does as well, since the OS
+can map storage pages into multiple address spaces.  There are a few caveats,
+however.  \Muse{} does not support POSIX atomicity guarantees for write operations.
+This means that sharers might see a partially applied write, if they read at
+the wrong moment.  NFS allows a similar relaxation to allow improved
+performance.
+
+Likewise, \Muse{} cannot participate in any transactional operations that the
+file system may provide for file contents.  Enforcing them requires file system intervention to allocate logs or
+shadow pages, and \Muse{} has access to neither.  This does not, however, mean
+that \Muse{} is unsuitable for application that require strong consistency
+guarantees, simply that the application must provide through other means.
+Databases, for instance, provide these guarantees independent of the file system, and we have successfully run several databases on top of \Muse{}.
+
+Our current implementation of \Muse{} does support all aspects of POSIX-style
+sharing of file descriptors across process boundaries.  POSIX requires, for
+instance, that if a child process inherits a file descriptor from its parent,
+that both processes share a single write point in the file.  \Muse{} could
+provide this functionality by providing a shared memory region for shared file
+descriptors, but the current implementation does not.
+
+There are also several aspects of POSIX that significantly increased the
+complexity of \Muse{} and reduced its performance.  The most important of these
+is POSIX's set of file descriptor aliasing rules.  POSIX has several methods
+for creating aliased file descriptors that are nearly, but not perfectly
+equivalent.  For example, \texttt{dup()} creates a new file descriptor that is
+indistinguishable from the original, except that the close-on-exec flag is not
+set on the new descriptor.  Supporting relationships like these adds a second
+layer of indirection inside \Muse{}, and increases the latency for each IO
+operation.  \ignore{For conventional storage, \fixme{the increase would be irrelevant, but since the underlying storage is so fast, it accounts for 800~ns (50\%) of the
+access time for a small operation. }}
+

@@ -1,0 +1,40 @@
+\section{Conclusion}
+\label{sec:conclude}
+
+NVMMs will require significant changes to systems architectures if applications
+are to exploit the performance they can provide.  We have described and
+evaluated \Chell{}, a system that uses NVMM to accelerate file access.
+\DAChell{} provides direct access to file data for file systems that reside
+solely in NVMM, while \CChell{} uses NVMM a persistent, write-back cache of a
+conventional file system.  In both cases, \Chell{} allows the application to
+access file data, in most cases, without interacting with the filesystem.
+
+We found that \DAChell{} improves 4~kB access latency by up to 19\% relative to
+file access through a file system built for NVMM and improves Berkeley-DB
+performance by 6\% over PMFS.  \CChell{} can
+reduce 4~kB access latency by up to 50\% and
+improve Berkeley-DB performance by up to 4.8\x{} relative to file access using the
+system's file buffer.
+
+Finally, we demonstrated a novel file IO interface that eliminates the need to
+copy data to and from userspace memory.  Since the advent of NVMM will make such copies the dominant cost in accessing file data, eliminating them is necessary if applications are going to fully levelage NVMMs.
+
+\ignore{
+In this paper we describe two systems use emerging non-volatile maing memory
+to accelarate storage accesses.
+\Muse{} allows programs to access files stored in fast, non-volatile memories
+without going through the operating and file system while still preserving the
+protections they provide.  We have shown that \Muse{} can reduce latency for
+small accesses by up to 2\x{} and improve bandwidth by up to 4\x{}.  \Muse{}
+demonstrates that it is possible to expose most of the performance of these
+memories for file access without significant changes to the operating or file
+system.
+
+\Chell{} is a caching system using NVMMs to accelerate file access on slower
+storage devices.
+\Chell{} reduces the operating system and file system overhead
+by mapping cache pages to user space and bypassing OS when service cache hits, 
+which significantly reduce the cache hit latency. Evaluation shows that \Chell{}
+can improve performance over page cache by up to 10\x{} for writes and
+1.7\x{} for reads.
+}

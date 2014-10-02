@@ -1,0 +1,133 @@
+\section{\DAChell{}: accelerating file access on NVMM}
+\label{sec:system-quill}
+
+\ignore{We need to unify the name for the \DAChell{} library and the \CChell{}
+  library, since they are basically the same.}
+
+\DAChell{} accelerates access to files stored in file systems that reside solely
+in NVMM.  It gives applications direct access to a file's contents without
+requiring any interaction with the operating system in the common case.  As a
+result, it can eliminate both the system call overhead required to enter the
+kernel and the file system overhead required to locate stored data and perform
+permission checks.  Below we describe the architecture and implementation of
+\DAChell{}.
+
+\subsection{\DAChell{}}
+
+\cfigure[Figures/ChellD-Stack.pdf,{\figtitle{\DAChell{} architecture}: by combining NVMM with the ability to map files into userspace, \DAChell{} provides applications with a fast, POSIX-compliant interface to data stored in NVMM.
+\ignore{this figure should show nvmm at the bottom, the file system organizing it into files, the data being mmaped into the application's address space, and then the DAChell components providing the posix access.  It should be `` layer cake'' figure. It should match the description in the text.  It also need to match the style of the figure we show for CacheChell.  That means it should be clear by looking at the two figures that the CacheChell figure is an extension/modification/etc of the the DAChell figure.  This will highlight how they are the same and different.}},fig:dachell]
+
+Figure~\ref{fig:dachell} shows the high-level architecture of
+\DAChell{}.  The system is equipped with NVMM that appears in the system's
+physical address space.  An NVMM-aware file system (e.g.,
+PMFS~\cite{PMFS}) manages the NVMM space and allows users to create and manage
+files that reside in the NVMM.  When an application requests that a file be
+\texttt{mmap()}'ed into its virtual address space, the NVMM-aware file system maps the
+NVMM pages directly into the virtual address space.  No paging or copying
+between NVMM and DRAM is necessary.  In the Linux kernel this kind of \texttt{mmap()}
+implementation is called \emph{direct access (DAX)}.
+
+\DAChell{} is implemented as an user space library, \libd{}, that transparently interposes on file access system calls.
+\DAChell{} exploits DAX \texttt{mmap()} to make common-case access to file data
+fast.  When an application opens a file, \DAChell{} intercedes, and
+\texttt{mmap()}s the file's contents into the application's address space.
+This provides direct access to the file's data and transfers the permission and
+extent information from the file system's data structures into the
+application's page table, leveraging the processor's fast memory
+protection hardware to locate the file's data and protect its contents.
+
+When the application calls \texttt{read()} and \texttt{write()}, \DAChell{}
+translates them into calls to \texttt{memcpy()} to transfer data between
+application buffers and the memory mapped file.  Other operations such as
+\texttt{lseek()} simply update the state (e.g., the current file pointer) that
+\DAChell{} maintains about each open file.  Consequently, common-case accesses
+require no calls to the operating system, avoiding costly system calls and 
+operating system and file system overheads.
+
+\DAChell{} cannot eliminate all interactions with the operating system.  In
+particular, any operations that modify file system meta data still must enter
+the OS.  This means that \DAChell{} helps performance less for appends than for
+normal write operations, since it needs to make a system call to extend both
+the file and the in-memory mapping.  
+Also, the updates to the file's modification time do not occur as they
+would with normal accesses.  However, many performance-intensive applications
+already disable file modification and access time updates to improve
+performance.
+
+Below we discuss the POSIX compatibility and implementation details of
+\DAChell{}.
+
+\subsection{POSIX Emulation}
+
+\DAChell{} must mimic the behavior of the normal POSIX file
+interface.  It must implement the inheritance of file descriptors across
+calls to \texttt{fork()} and their (selective) persistence across calls to
+\texttt{exec()}.  Furthermore, \texttt{dup()} and \texttt{dup2()} can create
+file descriptors that are aliases for one another.  The library must also
+enforce access restrictions (e.g., disallowing \texttt{write()} calls if the
+file opened read-only, even if the file's permissions allow modification).
+Implementing this functionality requires \DAChell{} to duplicate much of the
+information that the kernel would usually manage.  This includes file
+descriptor permission information, the close-on-exec flag, file position
+information, and file descriptor aliasing information.
+
+We have tested \DAChell{}'s fidelity to glibc's implementation of the POSIX
+interface under Linux using a battery of short tests, the applications
+described in Section~\ref{sec:results-quill},
+and a random file operation generator.
+Our testing system (described below) compares the return value and resulting
+data for every file operation to detect any variation between \DAChell{} and
+glibc.  In our tests, \DAChell{} behaves identically to POSIX.
+
+For file descriptors that point to files that don't reside in NVMM or that represent
+network sockets and other resource, \DAChell{} passes requests to the default
+POSIX functions that perform normal system calls.
+
+\DAChell{} avoids the need to modify application source code or recompile by
+using LD\_PRELOAD.  This allows \DAChell{} transparently link into the
+applications and interpose on calls to libc.
+
+The \DAChell{} POSIX emulation layer is built to be extensible and can be used to
+implement a variety of interesting utilities.  For instance, we used it to test
+\DAChell{}'s POSIX emulation by forwarding requests to both \DAChell{}'s
+implementation and the default POSIX versions (but operating in a different set
+of files) and comparing the results.
+
+\subsection{Implementation}
+
+After the POSIX emulation determines which data an read or write targets, the
+\DAChell{} translates the file operation into an operation on the memory mapped
+contents of the file.
+
+For each file being accessed via \DAChell{}, \DAChell{} divides the file into
+2~MB \emph{chunks}.  A B-tree store information about the file's
+\texttt{mmap()ed} chunks.  The key is the file offset, and the value is the
+mapped address and length.  For each access, \DAChell{} queries the tree for
+the mapping information.  If it finds the data, it performs a \texttt{memcpy()}
+to transfer data between application buffers and the memory mapped NVMM pages.
+
+If the file offset is not present in the B-tree, \DAChell{} uses
+\texttt{mmap()} to map the data into the application's addresss space. Then,
+it updates the B-tree and performs the \texttt{memcpy}.
+
+\DAChell{} \texttt{mmap()s} 2~MB at a time, because \texttt{mmap()} is expensive and when the file size changes, it may be necessary to remap the entire file. 
+Mapping two megabyte chunks amortizes the cost of mapping and reduces the need for remapping.  It also limits the number of memory-mapped regions the kernel must maintain.
+Each \texttt{mmap()} request allocates a
+virtual memory area (vma) in application's address space, and Linux kernel limits each process to have up to 65,536 vmas. If the requests are small and frequent,
+\texttt{mmap()}ing each of them will exhaust this number very quickly. 
+For small requests, the 2~MB \texttt{mmap()} also works as a prefetching mechanism, reduce the overhead for small sequential requests.
+
+\DAChell{} issues \texttt{mmap()} with the MAP\_POPULATE flag set to force the kernel to
+populate the application's page table immediately.  Without the flag, the first
+access to each page causes a page fault, degrading performance.  We examine costs and benefits of this approach in detail in Section~\ref{sec:results-quill}.
+
+\subsection{Supported file systems}
+\label{sec:dax-quill}
+
+\DAChell{} relies on the DAX-style behavior of \texttt{mmap()} that maps NVMM
+directly into the application's address space.  DAX-like functionality has
+existed in some file systems for many years.  It used to be called
+\emph{eXecute In Place}, or XIP, and mostly found use in embedded systems that
+needed to execute
+code directly from NOR flash devices.  DAX capabilities are already present in
+PMFS~\cite{PMFS} and efforts are underway to add it to other file sysetms~\cite{ext4dax}.

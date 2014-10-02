@@ -1,0 +1,120 @@
+#proc page
+  pagesize: 10 3.5
+  dopagebox: yes
+  crop: -0.55 -0.5 6.2 1.8
+
+#proc getdata
+  file: compare-bw.data
+  fieldnameheader: yes
+
+
+#procdef areadef
+  box: 1.75 1.5
+  yscaletype: linear
+  yrange: 0 20480
+  yaxis.labeldetails: size=10
+  yaxis.tics: yes
+  yaxis.ticincrement: 5120
+  yaxis.labeldistance: 0.5
+  xscaletype: log
+  xrange: 512 1048576
+  xaxis.stubvert: no
+  xaxis.stubdetails: size=10
+  xaxis.selflocatingstubs: text
+512 512
+1024
+2048 2k
+4096 
+8192 8k
+16384 
+32768 32k
+65536 
+131072 
+262144 256k
+524288 
+1048576 1M
+
+  xaxis.labeldistance: 0.5
+  #saveas A
+
+
+#set GROUPNUM = 0
+#while @GROUPNUM < 3
+
+#set XLEFT = $arith(@GROUPNUM*2.1+0.1)
+
+#proc legend
+  reset: yes
+
+#proc areadef
+  #clone A
+  location: @XLEFT 0.1
+  #if @GROUPNUM = 0
+    yaxis.selflocatingstubs: text
+0 0.0
+5120 5.0
+10240 10.0
+15360 15.0
+20480 20.0
+
+    title: Read
+  #elseif @GROUPNUM = 1
+    title: Write
+  #elseif @GROUPNUM = 2
+    title: 50% Read, 50% Write
+  #endif
+  #if @GROUPNUM = 1
+    xaxis.label: Log Request Size (bytes)
+  #endif
+  #if @GROUPNUM = 0
+    yaxis.label: Bandwidth (GB/s)
+  #endif
+
+
+
+#set NUMFIELDS = 6
+#set STARTCOL = $arith(@GROUPNUM*@NUMFIELDS+2)
+#set ENDCOL = $arith(@GROUPNUM+1*@NUMFIELDS+1)
+
+#set COL = @STARTCOL
+#while @COL <= @ENDCOL
+
+#set STYLE = $arith(@COL-@STARTCOL)
+
+#proc lineplot
+  yfield: @COL
+  xfield: 1
+  linedetails: style=@STYLE
+  legendlabel: #usefname
+
+#set COL = $arith(@COL+1)
+#endloop
+
+#if @GROUPNUM = 1
+#proc legend
+  textdetails: size=6
+  separation: -0.225
+  extent: 10
+  seglen: 0.15
+  format: down
+  location: 1.4 1.28
+  outlinecolors: yes
+  specifyorder:
+POSIX-1thread
+POSIX-4threads
+POSIX-16threads
+Quill-1thread
+Quill-4threads
+Quill-16threads
+#endif
+
+
+
+#set GROUPNUM = $arith(@GROUPNUM+1)
+
+#endloop
+
+
+
+
+

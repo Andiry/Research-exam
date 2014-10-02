@@ -1,0 +1,32 @@
+@Inproceedings {export:160853,
+abstract     = {<p>Today’s databases and key-value stores commonly keep all their data in main
+                memory. A single server can have over 100 GB of memory, and a cluster of such
+                servers can have 10s to 100s of TB. However, a storage back end is still required
+                for recovery from failures. Recovery can last for minutes for a single server or
+                hours for a whole cluster, causing heavy load on the back end. Nonvolatile main
+                memory (NVRAM) technologies can help by allowing near-instantaneous recovery of
+                in-memory state. However, today’s software does not support this well.
+                Block-based approaches such as persistent buffer caches suffer from data
+                duplication and block transfer overheads. Recently, user-level persistent heaps
+                have been shown to have much better performance than these. However they require
+                substantial application modification and still have significant runtime
+                overheads.</p>
+
+                <p>This paper proposes whole-system persistence (WSP) as an alternative. WSP is
+                aimed at systems where all memory is nonvolatile. It transparently recovers an
+                application’s entire state, making a failure appear as a suspend/resume event.
+                Runtime overheads are eliminated by using “flush on fail”: transient state in
+                processor registers and caches is flushed to NVRAM only on failure, using the
+                residual energy from the system power supply. Our evaluation shows that this
+                approach has 1.6–13 times better runtime performance than a persistent heap, and
+                that flush-on-fail can complete safely within 2–35{\%} of the residual energy window
+                provided by standard power supplies.</p>},
+author       = {Dushyanth Narayanan and Orion Hodson},
+booktitle    = {Seventeenth International Conference on Architectural Support for Programming
+                Languages and Operating Systems (ASPLOS 2012)},
+month        = {March},
+publisher    = {ACM},
+title        = {Whole-system Persistence with Non-volatile Memories},
+url          = {http://research.microsoft.com/apps/pubs/default.aspx?id=160853},
+year         = {2012},
+}

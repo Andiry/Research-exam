@@ -1,0 +1,65 @@
+% vim:tw=80:filetype=on:filetype=tex
+\begin{abstract}
+
+Persistent memories are appearing on the horizon and soon they will sit on the
+processor memory bus. They will allow software to access persistent data with
+extremely low latency and high bandwidth. However, existing storage
+architectures introduce significant overhead that can dominate the low-latency
+of persistent memories.
+
+In this paper, we present a new, layered storage architecture called \Chell{}
+that uses fast non-volatile memory to accelerate conventional file access.
+\Chell{} can operate in two different modes: In \emph{direct access mode},
+\Chell{} gives applications direct access to file stored in a file system that
+resides in non-volatile main memory.  In \Chell{}'s \emph{caching mode},
+it uses non-volatile main memory as a cache for a file system that resides on a
+more conventional storage device (e.g., a hard drive or SSD).  In both modes,
+\Chell{} provide a userspace POSIX-compliant library interface that directly
+maps non-volatile main memory into the application's address space.  From
+there, file accesses become simple (and very fast) memory copy operations.
+
+Our results shows that with \Chell{} direct access mode,
+it reduces the 4~KB read/write latency by 19\% over PMFS,
+and improves Berkeley-DB throughput by 6\%. \Chell{} cache mode improves
+the cache hit latency for 4~KB reads by 35\% and 50\% for writes over page
+cache, and improves Berkeley-DB performance by up to 4.8\x{}.
+Finally, we
+discuss how the antiquated semantics of the POSIX file interface limits
+\Chell{}'s efficiency, and we suggest some changes that would improve
+performance.
+\end{abstract}
+
+
+% a caching architecture that transparently caches
+%user files on persistent memories and avoids most system call overheads
+%by converting them into memory operations.
+
+
+%When an application uses a system call to access a file
+%on slower storage devices, \Chell{} intercepts
+%the call and redirects the request to cache blocks in persistent memory,
+%which reduces latency and increases bandwidth. To further reduce latency,
+%\Chell{} also memory maps the cache blocks directly into an application's
+%address space, allowing the application to access the cache via
+%load/store operations
+%without going to kernel. \Chell{} serve cache misses and eviction in the kernel
+%to provide protection. We compare \Chell{} to conventional
+%caching systems and find that \Chell{} can improve performance over page cache
+%by up to 3.8\x{} for writes and 1.7\x{} for reads. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

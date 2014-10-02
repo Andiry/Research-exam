@@ -1,0 +1,95 @@
+#proc page
+  pagesize: 4 3.5
+  dopagebox: yes
+  crop: -0.55 -0.65 3.3 1.7
+
+#proc getdata
+  file: bwVsLatency.data
+  fieldnameheader: yes
+
+#procdef areadef
+  box: 3 1.5
+  yscaletype: linear
+  yrange: 0 30720
+  yaxis.labeldetails: size=10
+  yaxis.tics: yes
+  yaxis.selflocatingstubs: text
+0 0.0
+5120 5.0
+10240 10.0
+15360 15.0
+20480 20.0
+25600 25.0
+30720 30.0
+
+  yaxis.ticincrement: 5120
+  yaxis.labeldistance: 0.5
+  xscaletype: log
+  xrange: 4 57671680
+  xaxis.stubvert: no
+  xaxis.stubdetails: size=10
+  xaxis.selflocatingstubs: text
+4 4kB
+128
+1024 1MB
+4096
+32768 32MB
+1048576
+4194304 4GB
+57671680 55GB
+
+  xaxis.labeldistance: 0.45
+  #saveas A
+
+
+#set GROUPNUM = 0
+
+#proc areadef
+  #clone A
+  location: 0.1 0.1
+  xaxis.label: File Size
+  yaxis.label: Bandwidth GB/s
+
+
+#set NUMFIELDS = 4 
+#set STARTCOL = $arith(@GROUPNUM*@NUMFIELDS+2)
+#set ENDCOL = $arith(@GROUPNUM+1*@NUMFIELDS+1)
+
+#set COL = @STARTCOL
+#while @COL <= @ENDCOL
+
+#set STYLE = $arith(@COL-@STARTCOL)
+
+#proc lineplot
+  yfield: @COL
+  xfield: 1
+  linedetails: style=@STYLE
+  #if @COL = 2
+  legendlabel: POSIX Reads
+  #elseif @COL = 3
+  legendlabel: POSIX Writes
+  #elseif @COL = 4
+  legendlabel: Quill Reads
+  #elseif @COL = 5 
+  legendlabel: Quill Writes
+  #endif
+
+#set COL = $arith(@COL+1)
+#endloop
+
+#proc legend
+  textdetails: size=9
+  separation: -0.3
+  extent: 3
+  seglen: 0.15
+  format: down
+  location: 2.1 1.25
+  outlinecolors: yes
+
+
+
+
+
+
+
+

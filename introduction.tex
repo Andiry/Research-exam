@@ -1,0 +1,83 @@
+\section{Introduction}
+\label{sec:introduction}
+
+Emerging non-volatile memories such as spin-torque transfer, phase change, and
+memristor-based memories~\cite{moneta, monetad, quicksan,Onyx,pollisbetterthaninterrupt}
+promise to revolutionize IO performance and how
+systems manage and provide access to persistent state.  The most aggressive
+proposals for integrating these technologies place them on the processor's
+memory bus alongside or replacing conventional DRAM, leading to non-volatile
+main memory (NVMM)-based systems~\cite{PCM_EfficientMainMemory, PCM_Hierarchy,eNVy,WSP}. The close coupling of compute and
+non-volatility in NVMM systems will force system designers to rethink how software interacts with storage, if applications are going to reap the benefits of NVMM.
+
+NVMMs invite a range of different interface designs, depending on the amount of
+NVMM available, the scale of the overall storage system, and the need (or lack
+thereof) to support legacy applications.  Researchers have proposed specialized
+file systems for NVMMs~\andiry{\cite{PMFS,BPFS}}, non-volatile
+caches~\cite{RVM,riovista}, and new programming
+models~\cite{nvheaps,mnemosyne}.
+However, these interfaces will only
+be successful if they can provide access to NVMM without sacrificing the
+performance it can provide.
+
+In this work we present \emph{\Chell{}}, a system that uses NVMM to accelerate
+access to file data.  \Chell{} operates in two modes: The first mode,
+\emph{\DAChell{}}, targets systems that store entire file systems in NVMM.  These might
+include future mobile systems or servers with large NVMM capacity.  The goal of
+\DAChell{} is to provide direct access to file contents without incurring the
+substantial latencies that operating and file system-mediated access impose.
+
+\DAChell{} achieves this by transparently replacing conventional system calls
+with memory operations: In response to \texttt{open()}, \DAChell{} memory maps
+the physical pages
+that make up the file directly into the application's address space and can
+then implement calls to \texttt{read()} and \texttt{write()} with userspace
+memory-to-memory copy operations.  \DAChell{} is implemented as a userspace
+library, \emph{\libd{}}, that dynamically links into the application and interposes on
+system calls.  As a result, it requires neither modification nor re-compilation of the application.
+
+The second approach, \CChell{}, focuses on systems that must access large
+storage volumes and are equipped with modest amounts of NVMM.  \CChell{}
+provides these systems with an NVMM-based persistent, write-back cache of a
+larger, conventional storage volume.  
+
+\CChell{} builds upon \DAChell{} by adding a kernel module that caches the contents
+of a conventional file system in the system's NVMM.  The \CChell{} kernel module,
+\emph{\drv{}}, manages and maintains the cache while the \CChell{} userspace library,
+\emph{\lib{}}, provides direct access to the cached contents.
+
+This paper describes and evaluates both of \Chell{}'s modes.  It examines the
+design challenges that each one presents and explains the motivation for the
+design decisions we made.  We evaluate both systems using a combination of
+micro- and macro-benchmarks and find that comparing to PMFS~\cite{PMFS},
+\DAChell{} reduces 4~KB read/write latency by 19\% and improves Berkeley-DB
+throughput by 6\%. \CChell{} reduces 4~KB access latency by 35\% for reads
+50\% for writes, and improves Berkeley-DB throughput by up to 4.8\x{} over Linux page cache.
+
+We also use the results to illustrate the negative impact that legacy
+file-based interfaces impose, and, based on these findings, we propose changes
+that would allow for simpler, faster access to file data.  These changes would
+allows applications to more fully benefit from NVMM performance without
+requiring invasive changes in how they access and manage non-volatile data.
+
+The remainder of the paper is organized as follows. Section
+\ref{sec:system-quill} introduces \DAChell{} architecture and implementation,
+and Section~\ref{sec:results-quill} evaluates the performance of \DAChell{}.
+Section~\ref{sec:overview} gives a overview of \CChell{} architecture, and
+describes the system implementation details of \CChell{}.
+Section~\ref{sec:results-chell} evaluates the
+performance of \CChell{}, and Section~\ref{sec:noposix} introduces our effort
+to improve the POSIX interface. Section \ref{sec:related} introduces
+related work and Section \ref{sec:conclude} summarizes our conclusion.
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
