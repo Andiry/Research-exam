@@ -1,0 +1,50 @@
+\section{Access model} 
+\label{sec:access}
+
+With the emergence of non-volatile memory, the accessing model needs
+to be re-considered. Accessing non-volatile memory addresses several
+challenges: how to create and manage non-volatile memory, how to ensure
+consistency during system failures, and how to avoid common programming
+bugs, such as dangling pointers, multiple free()s, and locking errors.
+
+\nvh{}~\cite{nvheaps} and \mnem{}~\cite{mnemosyne} try to address these issues
+and propose solutions to the non-volatile memory accessing models.
+
+\nvh{} creates a lightweight system that exposes the performance of the
+non-volatile memories and also ensures safety in the presence of
+application and system failures by avoiding common programming errors.
+It provides safe access to persistent objects with pointer safety and
+flexible ACID transactions, and makes persistent objects easy to program.
+
+\nvh{} is implemented as a C++ library under Linux. It manages
+the NVMM with a memory allocator, and uses a gabbage collector to recycle
+persistent objects. It also provides transaction support and atomic sections 
+to provide concurrency and consistency against system failure.
+
+\nvh{} addresses the volatile pointer and non-volatile pointer issue by
+only allowing pointers within a single NV-Heap (intra-heap NV-to-NV pointers)
+and pointers from volatile memory to a NV-Heap (V-to-NV pointers). This is
+because pointers from an NV-Heap to volatile memory (NV-to-V pointers) do
+not make sense when the system reboots, and inter-heap NV-to-NV pointers become
+unsafe if the NV-Heap that contains the object is not available. By enforcing
+this pointer restriction and checking pointers dynamically \nvh{} provides
+pointer safety guarantee.
+
+\nvh{} uses reference count to track dead objects and recycle them. When 
+the reference count to an object reduces to zero, the deallocation routine 
+atomically calls the destructor and deallocates the object. As the deallocation
+is atomic, the deallocator can resume work after system failure without error.
+
+\nvh{} uses undo log to provide ACID transaction support. Whenever application
+wants to modify an object, \nvh{} makes a copy of the original object to
+the write log and then updates the object. If system fails during
+the transaction, \nvh{} rolls back the object to its original copy by using
+the copy in the log.
+
+\nvh{} exists as normal files in a file system, and it uses DAX
+\texttt{mmap()} to map the NVMM pages directly into the application's
+address space. Application must explicitly declare persistent objects in
+\nvh{} and access the objects with caution. This adds overhead to the
+programming but \nvh{} exerts to export simple interface for programmer
+and hide the details.
+
