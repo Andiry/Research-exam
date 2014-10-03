@@ -48,3 +48,32 @@ address space. Application must explicitly declare persistent objects in
 programming but \nvh{} exerts to export simple interface for programmer
 and hide the details.
 
+\mnem{} is also addressing the management and persistency issue
+of system failure for NVMM systems. \mnem{} provides three key services
+that simplify the usage of NVMM. First, it provides \emph{persistent
+memory regions}, which can be created automatically to store persistent 
+variables or allocated dynamically. Second, \mnem{} provides persistence
+primitives, low-level operations that support atomic data updates. Finally,
+\mnem{} provides transaction support that enables consistent in-place
+updates of persistent objects. \mnem{} does not provide type-safe pointers
+and gabbage collection that \nvh{} provides, but it does not require
+modification to the processor.
+
+To bypass the CPU cache and makes writes to NVMM consistent, \mnem{} uses
+\emph{write-through stores} that writes data to NVMM directly. It also
+uses \emph{fense} to provide write ordering and \emph{flush} to flush
+cacheline to the NVMM. \mnem{} uses redo logging to provide transaction support
+as it does not require write ordering to log before every memory update.
+
+\mnem{} consists of three parts: a kernel module to expose and virtualize NVMM, 
+libraries to implement persistent regions and transaction system, and
+a compiler to support persistent variables and transactions. To use \mnem{},
+programmer uses \texttt{pstatic} to declare a persistent variable in the NVMM,
+and calls \texttt{pmap} to tell \mnem{} to allocate persistent regions in NVMM
+and map them to application's address space. From the view of programmer,
+\mnem{} works similar to \nvh{}: they both require programmer to explicitly
+declare persistent objects and modify their softwares.
+
+\mnem{} has some limitations. It does not support persistent region sharing
+between processes. Also it does not address the wearout issue of NVMM.
+
