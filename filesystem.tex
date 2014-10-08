@@ -1,0 +1,71 @@
+\section{File system} 
+\label{sec:fs}
+
+To efficiently make use of the NVMM and expose a user-friendly
+interface to applications, system software developers need to consider
+how to manage NVMM and work with user space applications smoothly.
+As NVMM can be treated as storage device, file system is a straight forward
+way to manage the NVMM.
+
+However, although NVMM is non-volatile, its difference from slow storage
+devices makes the NVMM file system design needs to consider several special
+characteristics:
+
+
+
+
+BPFS~\cite{BPFS} is a good example to show how to design a NVMM file system,
+and demonstrates the challenges in the implementation. BPFS guarantees that
+file system writes will become durable on the NVMM when it flushes the cache
+and each file system operation is performed atomically and in order.
+
+BPFS provides these guarantees with software implementation and hardware
+primitives. In software part, it uses \emph{short-circuit shadow paging}
+to provide fine-grained copy-on-write implementations. It also proposes
+two hardware primitives, \emph{atomic 8-byte writes} and \emph{epoch barriers}
+to support the short-circuit shadow paging and improve the file system
+performance.
+
+Shadow paging is a common file system design to keep file system in consistent
+state during system failure. To update data with shadow paging, file system
+does not write new data in-place; instead, it makes a copy of the old data,
+update the copy with new data, and then update the pointer in the upper layer
+atomically to point to the new data. Shadow paging guarantees the update is done
+atomically and file system is always in a consstent state.
+ ZFS~\cite{zfs} and WAFL~\cite{wafl} are two file
+systems that use shadow paging. However, traditional shadow paging cascades
+the copy-on-write operation from the modification place up to the root of 
+the file system tree, and hurts performance. With short-circuit shadow paging,
+BPFS does not always need to propagate the change up to the root, and performs
+shadow paging at fine granularity to improve the performance.
+
+To short-circuit the shadow paging, BPFS uses the atomic 8-bytes write primitive
+to update the pointer, so that the pointer update in the shadow paging is done
+atomically, eliminates the need to cascade the copy-on-write operations.
+8-byte is the size of pointer in 64bit systems, so if file system only needs to
+update a pointer in a data block, then the update is atomic. To support
+atomic 8-byte writes, BPFS adds a capacitor to each DIMM, so that it has enough
+power to finish all the outstanding writes in the row buffers when the system
+power fails.
+
+To provide safety and consistency, file system also needs to ensure that write
+is committed to persistent storage in program order. However, existing cache
+architecture and memory controller may reorder the writes to DRAM to improve
+performance. Operating systems provide \texttt{mfence} primitive to guarantee
+that all CPUs have a consistent view of the memory, but it does not impose
+any constraints on the write order to main memory. A NVMM file system must
+provide write ordering to file system updates.
+
+A simple way to provide write ordering is to flush the CPU cache line after
+write operation, or uses write-through to bypass CPU cache directly. However,
+these operations are expensive and undermines performance. Instead, BPFS uses
+epoch barrier to resolve the issue. An epoch is a batch of write operations,
+and hardware guarantees that epochs are committed to NVMM in program order.
+With the epoch barrier all the current writes cannot proceed until all the
+writes in the previous epochs are committed to NVMM and file system consitency
+is maintained. BPFS implements the epoch barrier primitive by adding counters,
+bits and capacitors to CPUs.
+
+With hardware support, BPFS implements a transactional file system for NVMM
+and gains better performance than traditional file systems.
+
