@@ -69,3 +69,33 @@ bits and capacitors to CPUs.
 With hardware support, BPFS implements a transactional file system for NVMM
 and gains better performance than traditional file systems.
 
+SCMFS~\cite{scmfs} is a file system designed for NVMM that reuses the memory
+management module in the operating system to reduce the implementation
+complexity. SCMFS aims to minimize the CPU overhead of the file system
+operations, and also assign each file to a contiguous virtual address space
+to simplify the read/write file operations.
+
+SCMFS adds a new address range to the operating system for the files resided
+on the NVMM, and 
+adds a new memory zone \emph{ZONE\_STORAGE} for NVMM space allocation. The
+NVMM allocation function \texttt{nvmalloc()} comes from \texttt{vmalloc()}
+so that the allocated pages have contiguous virtual address but not necessary
+to be contiguous in physical address.
+
+The author claims that running in virtual address helps to make the SCMFS
+implementation simple and improve the performance, but it also increases
+TLB misses. To address the issue of write reordering, SCMFS does not use the
+hardware primitives proposed by BPFS, instead it combines the Linux kernel
+\texttt{mfence} and \texttt{clflush} operations to flush the CPU cache in
+range and sequence the write operations. It may not be as fast as hardware
+primitives, but the performance is acceptable for common workloads.
+
+SCMFS stores all the virtual-physical page mapping information in the NVMM
+to restore the mappings when system fails and reboots. However this is not
+a scalable solution: the mapping table size increases with the file system
+size, and the time to mount the entire file system also increases. SCMFS
+resolves the issue with a lazy mapping, which maps only the metadata and inode
+table during the mount, and file data is mapped in background.
+Another scalability issue of SCMFS is that it has a fixed space for inode table,
+which means the number of files it support is fixed, and it does not scale
+well with NVMM size.
