@@ -99,3 +99,46 @@ table during the mount, and file data is mapped in background.
 Another scalability issue of SCMFS is that it has a fixed space for inode table,
 which means the number of files it support is fixed, and it does not scale
 well with NVMM size.
+
+PMFS~\cite{PMFS} is another NVMM file system. It is aiming to provide a
+light-weight POSIX file system that exploits NVMM's byte-addressability to
+avoid overheads of block layer and enable direct NVMM access by application.
+PMFS only requires a simple hardware primitive to provide software enforceable
+guarantees of durability and ordering of stores to NVMM and exposes the 
+performance potential of NVMM to user applications.
+
+The author analyzes several approaches to enforce consistency, and finds out
+using NVMM as a write-back cacheable memory and explicitly flushing modified
+data from CPU cache (\emph{clflush} works well. However, current \emph{clflush}
+implementation is strongly ordered and incurs performance penalty. Instead,
+PMFS proposes a optimized \emph{clflush} implementation which weaker ordering
+and hence improve performance. To provide the write ordering PMFS proposes
+a hardware primitive, \emph{pm\_wbarrier} to guarantee durability of NVMM stores
+already flushed from CPU caches.
+
+As a file system, PMFS also provides consistency. BPFS uses a file-grained
+shadow paging mechanism, while PMFS uses logging. There are two kinds of logging
+in file system implementation, redo and undo logging. Undo logging in PMFS
+requires a \emph{pm\_wbarrier} for each log entry while redo logging requires
+only two \emph{pm\_wbarrier} in a single transaction. However, undo logging
+is easy to implement and PMFS uses undo logging. Whenever there is an update
+to the PMFS metadata, PMFS copies the original value to the log entry and
+make it persistent before write the new value in-place. PMFS uses the
+8-byte and 16-byte atomic updates of CPU to perform atomic in-place updates.
+For file data updates, PMFS uses copy-on-write mechanism.
+
+PMFS also supports write protection. While PMBD uses private mapping to
+protect the NVMM from stray writes, it adds complexity to the implementation
+for not able to provide a fix virtual address mapping. Instead, PMFS leverages
+the CPU's write protect control mechanism (CR0.WP) to open small short write
+windows without changing the page tables and hence avoid the expensive
+TLB flushes.
+
+To expose the high bandwidth and low latency of NVMM to applications,
+PMFS uses the eXecute-In-Place (XIP) interface to support memory-mapped
+IO operations. With XIP support the NVMM pages are directly mapped into
+application's address space and bypass the page cache and block layer.
+In contrast, BPFS does not support \texttt{mmap}, and PMBD transfers
+data via page cache, significantly undermines the NVMM performance.
+PMFS also supports large page size to decrease the page table size and
+TLB entries.
