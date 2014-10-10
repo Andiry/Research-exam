@@ -1,0 +1,13 @@
+\section{System implications} 
+\label{sec:implications}
+
+Current researches of NVMM put them on the memory bus, but do not wipe out
+DRAM. They still use DRAM to store some data structures~\cite{BPFS, PMFS},
+and the operating system is still running on DRAM.
+
+~\cite{systemimplications} shows the implications for a NVMM-only
+system. It addresses several changes and challenges to current system design,
+such as paging and application running model. A NVMM-only system may benefit
+from the persistency of NVMM for fast recovery, but also meets the security
+and privacy issue which current system does not have. How to design a
+NVMM-only system is still in exploration.
