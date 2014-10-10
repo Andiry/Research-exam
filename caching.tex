@@ -1,0 +1,21 @@
+\section{CPU caching} 
+\label{sec:caching}
+
+Some researchers~\cite{CPUcaching}
+show the impact of CPU caching on the NVMM performance
+and programming. Modern CPUs have store buffer to temporarily keep each store
+to hide the latency of cache, and WC buffer to batch the writes before
+flush to memory. Both store buffer and WC buffer are aiming to hide latency
+and improve memory performance, but they also introduce problems on the
+persistency of NVMM, and require programming changes on NVMM.
+
+CPU uses write-back mode by default. In this mode stores are kept in cache
+before writing to memory. To guarantee stores are committed to NVMM to achieve
+persistency, applications must explicitly flush the cache lines for data
+updates. This approach is not only error-prone~\cite{singlelock}
+but also incurs significant
+performance penalty. In contrast, write-through mode removes unnecessary
+cache line flushes and reduce the software complexity. \cite{CPUcaching}
+compares the two 
+modes, and evaluation result shows there is no universally dominant strategy,
+but overall write-through mode appears most competitive.
