@@ -10,8 +10,24 @@ kernel, and implements file system permission check in hardware to provide
 protection to files. It also supports dirty data tracking and LRU eviction
 in hardware.
 
-eNVy~\cite{eNVy} proposes a system that attaches flash to the memory
-bus, and using SRAM to achieve high bandwidth and low latency.
+eNVy~\cite{eNVy} is a early exploration of NVMM storage system design.
+It proposes a system that attaches flash to the memory
+bus, and using SRAM to achieve high bandwidth and low latency. At that time
+there is no real byte-addressable NVMM technology, so eNVy uses flash memory
+as main storage device. To expose the byte-addressable capability to 
+applications, eNVy uses battery backed SRAM as a write buffer and performs
+copy-on-write on flash memory pages. eNVy also stores the page table inside
+SRAM, and perform cleaning in the background to guarantee write latency and
+bandwidth. To do the cleaning efficiently, eNVy divide flash pages into
+segments and lower the utilizations of hot segments to reduce the cleaning
+time.
+
+eNVy is not using real byte-addressable NVMM devices, but its implementation
+shows insight for SSD designs. Current commercial SSD works mainly like
+eNVy: SSD uses DRAM as write buffers, deploy FTL layer to do the page remapping
+, and perform cleaning in the background to provide available flash pages
+and wear leveling.
+
 WSP~\cite{WSP} utilizes NVMM's persistent property, flushes processor registers
 and caches to NVMM on power failures to reduce the system recovery time.
 Some vendors have produced non-volatile main memory devices, they are
