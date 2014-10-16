@@ -102,3 +102,29 @@ the values in a node is not in sorted order and it takes linear time to search
 value in a node. CDSMM has several interesting ideas about NVMM protection, but
 to integrate the design in applications is still difficult.
 
+Aerie~\cite{Aerie} tries to reduce the software overhead to access NVMM
+by redesigning the file system interfaces. Aerie exposes the file system
+data stored in NVMM directly to user-mode programs. Applications link to
+a user space library that provides local access to data and a OS kernel
+module provides coarse-grained allocation and protection. Applications can
+modify file data directly while contact the file system service to update
+metadata.
+
+Aerie consistos of three components: an untrusted user mode library (libFS),
+a trusted file system service (TFS), and a kernel module SCM manager. libFS
+handles data access, TFS provides service for metadata updates and concurrency
+control among processes, and SCM manager provides storage allocation mechanism.
+libFS uses RPC to communicate with TFS, and TFS works as lock manager to 
+assign locks to applications using libFS, and it can revoke locks if needed.
+
+The protection is provided by both SCM manager and TFS, which divide the NVMM
+into extents, embedding them with permission information, and grant applications
+to the extents accordingly. To reduce RPC communication overhead, Aerie
+uses a batched and delayed metadata update mechanism, only when updates need to
+be visible to other clients. Another optimization Aerie does is to using
+a in-memory cache of path names to speed up name resolution.
+
+Aeire designs a file system, PXFS wich complies with POSIX semantics. To further show the impact of POSIX interfaces on performance, they also design a flat
+key-value store storage system (FlatFS), which applications access file
+through a simple put/get/erase interface. FlatFS is simpler, avoiding the overhead of name resolution and accelerates file sharing. The evalution shows FlatFS
+outperforms PXFS by up to 109\%, leading us to rethink the file system interface design.

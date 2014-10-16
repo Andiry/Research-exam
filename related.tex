@@ -75,9 +75,6 @@ and ordering of writes while protecting persistent memory from stray writes.
 Unlike BPFS, PMFS utilizes pm\_wbarrier primitive to flush PM stores to a power
 fail-safe destination, and does not require hardware support.
 
-\ignore{However, reads and writes to BPFS and PMFS need to go to kernel, while \Chell{}
-eliminates this overhead.}
-
 Both \DAChell{} and \CChell uses \texttt{mmap()} to accelerate NVMM access.
 Failure-atomic msync~\cite{atomicmsync} proposes a atomic commit of memory
 pages change for \texttt{mmap()ed} files, by flushing memory pages to persistent
