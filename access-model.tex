@@ -128,3 +128,26 @@ Aeire designs a file system, PXFS wich complies with POSIX semantics. To further
 key-value store storage system (FlatFS), which applications access file
 through a simple put/get/erase interface. FlatFS is simpler, avoiding the overhead of name resolution and accelerates file sharing. The evalution shows FlatFS
 outperforms PXFS by up to 109\%, leading us to rethink the file system interface design.
+
+Echo~\cite{echo} explores the NVMM with key value stores. Echo is a lightweight,
+persistent key value store system. The data is stored persistent in NVMM,
+while DRAM is a thin layer to offset the performance and wear-out weakness of
+NVMM.
+
+Echo supports concurrency, data consistency, recoverability and scalability
+by employing transactions and snapshot isolation. The database of Echo is organized as a sequence of snapshots. A snapshot consists of a unique, monotonically
+increasing snapshot number and a set of key-value pairs. Each transaction
+commitment creates a new snapshot with a new snapshot number. 
+
+To reduce the NVMM writes, Echo uses worker thread, each with a local store
+space in DRAM to keep uncomitted data.
+When a thread completes transaction, it commits the modified
+data to the master store in NVMM, and make the changes visible to other
+worker threads.
+
+Echo uses hashtable to lookup version table of a key in NVMM. Each version table
+consists of a vector of version table entries that maintains the history
+of committed values of the key. With version table it is easy to track
+the history and roll back to old versions. Unfortunately Echo does not
+resolve the conflicts, aborts and rollbacks support, which is essential
+for the system.
