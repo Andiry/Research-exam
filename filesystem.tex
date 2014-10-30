@@ -100,6 +100,15 @@ Another scalability issue of SCMFS is that it has a fixed space for inode table,
 which means the number of files it support is fixed, and it does not scale
 well with NVMM size.
 
+An evolution of SCMFS~\cite{superpage} further improves SCMFS performance
+by allocating larger pages and reducing TLB misses. Superpage~\cite{superpage}
+divides NVMM into two regions, one of normal page allocation (4KB) and the other
+for superpages (2MB). By allocating normal pages for small files and file 
+metadata while allocating superpages for larger files, file system performance
+improves with less TLB misses.
+
+
+
 PMFS~\cite{PMFS} is another NVMM file system. It is aiming to provide a
 light-weight POSIX file system that exploits NVMM's byte-addressability to
 avoid overheads of block layer and enable direct NVMM access by application.
@@ -141,4 +150,7 @@ application's address space and bypass the page cache and block layer.
 In contrast, BPFS does not support \texttt{mmap}, and PMBD transfers
 data via page cache, significantly undermines the NVMM performance.
 PMFS also supports large page size to decrease the page table size and
-TLB entries.
+TLB entries. ~\cite{mmfs} is another implementation of NVMM file system
+whichi supports XIP interface. It integrates memory management with file system
+to manage NVMM, allocate NVMM in pages and directly map to application
+address space to gain better performance.

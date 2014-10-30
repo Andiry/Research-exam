@@ -151,3 +151,32 @@ of committed values of the key. With version table it is easy to track
 the history and roll back to old versions. Unfortunately Echo does not
 resolve the conflicts, aborts and rollbacks support, which is essential
 for the system.
+
+To ensure system persistency during system failure, all the NVMM systems
+use CPU cache flushing~\cite{PMFS, nvheaps}, logging~\cite{PMFS, nvheaps,
+mnemosyne} and hardware primitives~\cite{BPFS, PMFS} to provide persistency.
+All these operations introduce overhead and undermine NVMM performance.
+To reduce the cost of persistence for NVMM heaps, ~\cite{NVMCap} proposes
+several optimizations to current NVMM systems.
+
+~\cite{NVMCap} divides the applications into two categories: those
+use NVMM for capacity without persistence (NVMCap), and those use the
+persistence (NVMPersist). ~\cite{NVMCap} provides two different
+categories of NVMM APIs to these two kinds of aaplications: the NVMCap
+applications do not require data persistence and hence do not flush state
+of cache, while NVMPersist applications frequently flush cache to obtain
+durability guarantees.
+
+Current systems keep metadata in NVMM to recovery from system failure.
+These metadata are updated frequently during system running and make
+them persistent adds allocator overhead. To overcome the issue, ~\cite{NVMCap}
+keep metadata in DRAM buffer, and log the updates to NVMM to reduce NVMM
+writes. To further improve the allocator performance, the system allocates
+physically contiguous pages in batch and pre-allocate them to applications 
+to reduce cache sharing impact. While still using logging for NVMPersist
+applications, the logging is also divided into two categories: fine-grained
+word log for metadata updates, and coarse-grained object log for object
+updates. word log contains the full metadata, while object log indicates
+the address and size of the object. This reduces log size and NVMM writes for
+object as eliminates the need to log the entire object.
+For big size objects, the log only 
