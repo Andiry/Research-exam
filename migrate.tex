@@ -1,0 +1,32 @@
+\section{Page migration} 
+\label{sec:migration}
+
+Current non-volatile memory technologies, such as phase change memory
+~\cite{PCMHierarchy}, STT-RAM and memristors, all suffer from slower writes and
+limited endurance comparing to DRAM.
+Thus, how to utilize NVMM's persistency property while reduce the writes to
+NVMM to hide the write latency and extend endurance becomes an interesting
+topic and several researches contributes to this area.
+
+In the hybrid system installed with both DRAM and NVMM, how to allocate
+pages to exploit the performance of these two memories is a question.
+\cite{pcmalloc} allocate heap and stack segments with DRAM pages, and allocate
+NVMM pages to other segments, because heap and stack segments are updated
+frequently, while text segment is read only, and bss/data segments are
+updated infrequently. These allocation mechanism allocates write-intensive
+pages in DRAM and reduce the writes to NVMM. \cite{pcm3d} combines the DRAM
+and NVMM ares in a large flat memory region and migrate write-intensive pages
+to DRAM. The migration is performed in operating system and target the
+frequently written pages, while leave the read-intensive pages in NVMM.
+
+RaPP~\cite{RaPP} implements the page migration inside the memory controller
+to monitor access patterns and migrate pages between NVMM and DRAM. Rapp
+proposes a complicate memory controller design with a rank-based page
+placement policy. Depending on the access patterns to pages, RaPP create
+multiple page queues to store different rank page frames, place
+performance-critical pages and frequently written pages in DRAM, place
+non-critical pages and rarely written pages in PCM and spread writes
+to PCM across many physical frames. By putting the page placement policy
+inside memory controller, RaPP achieves better performance than software
+solution, but with more sophisticated hardware design.
+
