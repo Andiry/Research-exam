@@ -102,6 +102,30 @@ the values in a node is not in sorted order and it takes linear time to search
 value in a node. CDSMM has several interesting ideas about NVMM protection, but
 to integrate the design in applications is still difficult.
 
+CDDS~\cite{cdds} proposes a consistent and durable data structure for NVMM.
+Instead of logging, CDDS works like snapshot file systems such as
+WAFL~\cite{wafl} and ZFS~\cite{zfs}, uses version control to organize data,
+makes it possible to rollback to earlier persistent versions during crash
+recovery.
+
+CDDS uses a combination of \texttt{mfence} and \texttt{clflush} to make sure
+data in CPU cache is written to NVMM persistently, just like other systems.
+However, it does not use logs to provide transaction guarantees. In the B-tree
+created by CDDS, each node has a start version and end version, to show the
+life period of the node. When a node is created, its start version is set
+to the current B-tree version. When an update to the B-tree makes the node
+not alive, the end version is set to the B-tree version accordingly.
+Every update to the B-tree results in a creation of
+a new version, and read only returns the newest version. A garbage collector
+is running in background, eliminates those dead data and clear space for
+new data. During crash recovery, nodes newer than the most recent consistent
+version are removed and the older nodes are recursively for partial updates,
+make sure the tree is indentical to the most consistent version.
+
+CDDS shows the version-based design of the data structure on persistent
+memory. However, the implementation is complicated and specific. We still
+need to find out a more generic way to access the NVMM.
+
 Aerie~\cite{Aerie} tries to reduce the software overhead to access NVMM
 by redesigning the file system interfaces. Aerie exposes the file system
 data stored in NVMM directly to user-mode programs. Applications link to
