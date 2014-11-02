@@ -26,6 +26,14 @@ By propagate the write operation in two paths, WrAP not only makes the
 write atomic, but also avoid the overhead of CPU cache flushing.
 Unfortunately WrAP does not provide evaluation of their system.
 
+SoftWrap~\cite{softWrAP} is the software implementation version of WrAP.
+Instead of applying a WrAP controller and VPC, SoftWrAP installs a library
+to transform applications to use the WrAP APIs to access the NVMM. WrAP
+uses VPC to hold PCM entries evicted from CPU cache, while SoftWrAP
+uses alias update, routes the cache entries to write to a different location
+without affecting the original data. SoftWrAP achieves the same persistent
+guarantee as WrAP without hardware modification.
+
 WSP~\cite{WSP} stands for whole-system persistence. It aims at systems where
 all memory is NVMM, and it transparently recovers an application's entire state,
 making a system failure appear as a suspend/resume event. WSP does not
