@@ -1,19 +1,21 @@
 \section{Introduction}
 \label{sec:introduction}
 
-Emerging non-volatile memories such as spin-torque transfer, phase change, and
-memristor-based memories~\cite{moneta, monetad, quicksan,Onyx,pollisbetterthaninterrupt}
+Emerging non-volatile memories such as spin-torque transfer RAM (STT-RAM),
+phase change memory (PCM), and
+memristor-based memories~\cite{moneta, monetad, quicksan,Onyx,
+pollisbetterthaninterrupt}
 promise to revolutionize IO performance and how
-systems manage and provide access to persistent state.  The most aggressive
+systems manage and provide access to persistent state. The most aggressive
 proposals for integrating these technologies place them on the processor's
 memory bus alongside or replacing conventional DRAM, leading to non-volatile
-main memory (NVMM)-based systems~\cite{PCM_EfficientMainMemory, PCM_Hierarchy,eNVy,WSP}. The close coupling of compute and
+main memory (NVMM)-based systems~\cite{PCM_EfficientMainMemory, PCMHierarchy,eNVy,WSP}. The close coupling of compute and
 non-volatility in NVMM systems will force system designers to rethink how software interacts with storage, if applications are going to reap the benefits of NVMM.
 
 NVMMs invite a range of different interface designs, depending on the amount of
 NVMM available, the scale of the overall storage system, and the need (or lack
 thereof) to support legacy applications.  Researchers have proposed specialized
-file systems for NVMMs~\andiry{\cite{PMFS,BPFS}}, non-volatile
+file systems for NVMMs~\cite{PMFS,BPFS}, non-volatile
 caches~\cite{RVM,riovista}, and new programming
 models~\cite{nvheaps,mnemosyne}.
 However, these interfaces will only
