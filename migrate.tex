@@ -18,6 +18,9 @@ pages in DRAM and reduce the writes to NVMM. \cite{pcm3d} combines the DRAM
 and NVMM ares in a large flat memory region and migrate write-intensive pages
 to DRAM. The migration is performed in operating system and target the
 frequently written pages, while leave the read-intensive pages in NVMM.
+PDRAM~\cite{pdram} introduces a hybrid PRAM and DRAM main memory system, 
+relies on a hardware memory controller to log the write counts to each page,
+while a software module swap pages between DRAM and NVMM and does wear-leveling.
 
 RaPP~\cite{RaPP} implements the page migration inside the memory controller
 to monitor access patterns and migrate pages between NVMM and DRAM. Rapp
