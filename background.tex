@@ -6,9 +6,27 @@ Three emerging non-volatile memory technologies promise to provide fast,
 phase change memory (PCM), and memristor-based memories. In the following
 sections we briefly introduce each of them.
 
+\textbf{Phase Change Memory} is a promising non-volatile byte-addressable
+memory technology. PCM is built with Chalcogenide-based materials, which has
+two states, crystalline state and amorphous state. By
+injecting current to heat the memory cell to a high temperature for a period
+of time, the material crystallize and the resistence reduce. To reset the cell,
+apply a large enough current for a short period to melt down the
+material and it transition into amorphous state with higher resistence.
+ These two states can be read as "1" and "0". As transition into crystalline
+state requires longer current injection, PCM has slower writes comparing to
+reads.  
+As heating causes contraction of the cell, PCM has limited write endurance
+up to $10^8$ cycles.
+ 
 \textbf{Spin-Torque Transfer RAM} STT-RAM uses magnetic properties of 
 certain materials and electric charges to enable different persistent states 
-in memory cells. STT-RAM promises potential of unlimited write cycles, and
+in memory cells. Each cell of STT-RAM has two ferromagnetic plates, with
+one holds a particular polarity permanently, while the other can change the
+polarity. If the two plates have the same polarity, the cell stores "1",
+otherwise it stores "0". By applying a current STT-RAM can change the polarity
+of the plate with soin-transfer torque.
+STT-RAM promises potential of unlimited write cycles, and
 current prototype using tunneling magnetorresistence showed 32ns for
 read latency and 40ns for write latency, with 0.3mA power consumption
 per cell [??]. The disadvantage of STT-RAM is shrinking cell size is
@@ -19,18 +37,6 @@ changes the resistence of the memristor device, and different resistence level
 can be read as 0 or 1. Recent research on memristor indicates that its
 performance could be comparable to DRAM, with write endurance up to $10^{10}$
 cycles. Currently memristor is still under development in the laboratory.
-
-\textbf{Phase Change Memory} is a promising non-volatile byte-addressable
-memory technology. PCM is built with Chalcogenide-based materials. By
-injecting current to heat the memory cell to a high temperature for a period
-of time, the material crystallize and the resistence reduce. To reset the cell,
-apply a large enough current for a short period to melt down the
-material and it transition into amorphous state. These two states can be read as
-"1" and "0". 
-
-PCM has fast reads comparable to DRAM, while writes are slower than DRAM.
-As heating causes contraction of the cell, PCM has limited write endurance
-up to $10^8$ cycles.
  
 \subsection{NVRAM on Background}
 \label{sec:background}
