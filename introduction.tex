@@ -12,12 +12,29 @@ memory bus alongside or replacing conventional DRAM, leading to non-volatile
 main memory (NVMM)-based systems~\cite{PCM_EfficientMainMemory, PCMHierarchy,eNVy,WSP}. The close coupling of compute and
 non-volatility in NVMM systems will force system designers to rethink how software interacts with storage, if applications are going to reap the benefits of NVMM.
 
+As NVMM provides latency and bandwidth comparable to DRAM, new problems
+appear if the processors directly access them as DRAM. One problem is 
+CPU cache hierarchy. Modern CPUs have several levels of write-back cache,
+ and data store does not flush to memory explicitly. If system fails before
+data in cache flushed to NVMM, the data is lost after recovery. Another
+problem is the write reordering, as modern CPU may reorder writes to the
+memory for performance, and use cache consistency protocols to maintain
+a consistent visibility of memory for the processors. However, for NVMM,
+out-of-order writes may break the consistency after the system failure,
+for example, in file system if the metadata change is written to NVMM before
+the file data, the file may be corrupted if system fails during the two 
+operations. 
+
 NVMMs invite a range of different interface designs, depending on the amount of
 NVMM available, the scale of the overall storage system, and the need (or lack
 thereof) to support legacy applications.  Researchers have proposed specialized
 file systems for NVMMs~\cite{PMFS,BPFS}, non-volatile
 caches~\cite{RVM,riovista}, and new programming
 models~\cite{nvheaps,mnemosyne}.
+
+
+
+\ignore{
 However, these interfaces will only
 be successful if they can provide access to NVMM without sacrificing the
 performance it can provide.
@@ -61,6 +78,7 @@ file-based interfaces impose, and, based on these findings, we propose changes
 that would allow for simpler, faster access to file data.  These changes would
 allows applications to more fully benefit from NVMM performance without
 requiring invasive changes in how they access and manage non-volatile data.
+}
 
 The remainder of the paper is organized as follows. Section
 \ref{sec:system-quill} introduces \DAChell{} architecture and implementation,
