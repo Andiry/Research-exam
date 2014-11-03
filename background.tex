@@ -38,6 +38,26 @@ can be read as 0 or 1. Recent research on memristor indicates that its
 performance could be comparable to DRAM, with write endurance up to $10^{10}$
 cycles. Currently memristor is still under development in the laboratory.
  
+\begin{table}
+	\resizebox{\linewidth}{!}{
+	\centering
+	\begin{tabular}{|l|c|c|c|c|}
+	\hline
+%	\multirow{4}{*}{}&PMFS &\DAChell{}\\\hline
+%	&\multicolumn{2}{c|}{(Ops per second)}\\\hline
+	Item & DRAM & PCM & STT-RAM & Memristor \\\hline
+	\hline
+	Byte Addressable & Yes & Yes & Yes & Yes \\\hline
+	Non-volatile & No & Yes & Yes & Yes \\\hline
+	Read Time (ns) & 10 & 10-50 & 10-35 & ? \\\hline
+	Write Time (ns) & 10 & 50-500 & 10-90 & ? \\\hline
+	Endurance & $10^{15}$ & $10^{9}$ & $10^{15}$ & ? \\\hline
+	\end{tabular}}
+	\vspace*{1mm}
+	\caption{\figtitle{Properties of Non-volatile memory technologies}}
+	\label{table:techtrend}
+\end{table}
+
 \subsection{NVRAM on Background}
 \label{sec:background}
 
