@@ -1,32 +1,27 @@
 % vim:tw=80:filetype=on:filetype=tex
 \begin{abstract}
 
-Persistent memories are appearing on the horizon and soon they will sit on the
-processor memory bus. They will allow software to access persistent data with
+Non-volatile memories such as Phase Change Memory, Spin-Torque Transfer RAM
+and Memristor memory are appearing on the horizon and soon they will sit on the
+processor memory bus. These Non-volatile Main Memories (NVMM)
+ will allow software to access persistent data with
 extremely low latency and high bandwidth. However, existing storage
 architectures introduce significant overhead that can dominate the low-latency
-of persistent memories.
+of persistent memories. For example, if NVMM is accessed as traditional
+storage device, the performance is undermined by the software overhead of
+POSIX interface, mode switch and block layer. 
 
-In this paper, we present a new, layered storage architecture called \Chell{}
-that uses fast non-volatile memory to accelerate conventional file access.
-\Chell{} can operate in two different modes: In \emph{direct access mode},
-\Chell{} gives applications direct access to file stored in a file system that
-resides in non-volatile main memory.  In \Chell{}'s \emph{caching mode},
-it uses non-volatile main memory as a cache for a file system that resides on a
-more conventional storage device (e.g., a hard drive or SSD).  In both modes,
-\Chell{} provide a userspace POSIX-compliant library interface that directly
-maps non-volatile main memory into the application's address space.  From
-there, file accesses become simple (and very fast) memory copy operations.
+Although just access NVMM as DRAM is a simple solution and provide good
+ performance, current CPU cache hierarchy and write reordering neutralizes
+the persistency of NVMM, and the slow write latency and endurance of NVMM makes
+ it different from DRAM and requires special system software design. 
+In this paper, we survey the different software solutions to exploit
+the performance potential of NVMM as well as its persistent property,
+examines challenges and opportunities NVMM brings to system software
+design.
+The paper also introduces our own work to accelerate storage access with
+NVMM.
 
-Our results shows that with \Chell{} direct access mode,
-it reduces the 4~KB read/write latency by 19\% over PMFS,
-and improves Berkeley-DB throughput by 6\%. \Chell{} cache mode improves
-the cache hit latency for 4~KB reads by 35\% and 50\% for writes over page
-cache, and improves Berkeley-DB performance by up to 4.8\x{}.
-Finally, we
-discuss how the antiquated semantics of the POSIX file interface limits
-\Chell{}'s efficiency, and we suggest some changes that would improve
-performance.
 \end{abstract}
 
 
