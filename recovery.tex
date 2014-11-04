@@ -12,37 +12,3 @@ uses a undo/redo logging strategy to make the persistency guarantee. Old values
 are copied to undo log, while new values are written to the redo log. Applications call log control commands to force redo log to write into the disks
 and become persistent.
 
-Rio~\cite{riofilecache} uses battery-backed memory to build a operating system
-with better performance and able to recovery from crash. To prevent the file
-cache from corrupt during system fialure, Rio turns off the write-permission
-bits in the page table for all file cache pages, only enable it during page
-writing. Rio also disables the ability of the processor to bypass the TLB,
-enforce the protection for all the pages.
-
-Rio uses the warm reboot mechanism to rebuild the system. When the system 
-recovers from failure, it read the file cache extents present in physical memory
-and update file system with the data. To figure the file cache contents,
-Rio also needs to store the metadata for the file cache. Rio allocates a
-separate region of memory called registry to store the metadata information.
-
-Rio improves the system performance by eliminating the sync and fsync system
-calls, which are expensive in the original system. However, as buffer cache
-is persistent now, the write ordering is essential to make sure the system
-works correctly. Rio does not explain how it works on write ordering and CPU
-caching impacts.
-
-Another contribution of Rio is that it proposes several fault models of system
-failure to memory and tested the system with thousands of reboot. This makes
-it more reliable.
- 
-Rio Vista~\cite{riovista} is a combination of RVM and Rio. It is an evolutionarywork of Rio, and relate closely to RVM design. Like RVm, Rio Vista is a
-user-level, recoverable-memory library, and it runs on Rio. Unlike RVM,
-which has undo log and redo log, Rio Vista just has one undo log. When
-application starts a transcation, Rio Vista copies the origial data to the 
-undo log, which is kept in NVMM provided by Rio, and then application can
-write new data in-place and discards the undo log by the end of the transaction.
-
-Rio Vista is trying to be simple, handles only the basic transaction features
-of atomicity and persistency. Like Rio, it does not address the write ordering
-issue and CPU caching issue, which undermines its credability. 
-

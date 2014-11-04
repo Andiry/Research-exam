@@ -1,22 +1,158 @@
-\section{CPU caching} 
+\section{Caching and acceleration} 
 \label{sec:caching}
 
-NVMM adds some challenges to system software programmers.
-Some researchers~\cite{CPUcaching}
-show the impact of CPU caching on the NVMM performance
-and programming. Modern CPUs have store buffer to temporarily keep each store
-to hide the latency of cache, and WC buffer to batch the writes before
-flush to memory. Both store buffer and WC buffer are aiming to hide latency
-and improve memory performance, but they also introduce problems on the
-persistency of NVMM, and require programming changes on NVMM.
+As NVMM outperform traditional storage devices with low latency and high
+bandwidth, build a persistent cache for slower storage devices and
+accelerate the file access is a good usage of NVMM. 
 
-CPU uses write-back mode by default. In this mode stores are kept in cache
-before writing to memory. To guarantee stores are committed to NVMM to achieve
-persistency, applications must explicitly flush the cache lines for data
-updates. This approach is not only error-prone~\cite{singlelock}
-but also incurs significant
-performance penalty. In contrast, write-through mode removes unnecessary
-cache line flushes and reduce the software complexity. \cite{CPUcaching}
-compares the two 
-modes, and evaluation result shows there is no universally dominant strategy,
-but overall write-through mode appears most competitive.
+\textbf{Rio}~\cite{riofilecache} uses battery-backed memory to build a
+operating system
+with better performance and able to recovery from crash. To prevent the file
+cache from corrupt during system fialure, Rio turns off the write-permission
+bits in the page table for all file cache pages, only enable it during page
+writing. Rio also disables the ability of the processor to bypass the TLB,
+enforce the protection for all the pages.
+
+Rio uses the warm reboot mechanism to rebuild the system. When the system 
+recovers from failure, it read the file cache extents present in physical memory
+and update file system with the data. To figure the file cache contents,
+Rio also needs to store the metadata for the file cache. Rio allocates a
+separate region of memory called registry to store the metadata information.
+
+Rio improves the system performance by eliminating the sync and fsync system
+calls, which are expensive in the original system. However, as buffer cache
+is persistent now, the write ordering is essential to make sure the system
+works correctly. Rio does not explain how it works on write ordering and CPU
+caching impacts.
+
+Another contribution of Rio is that it proposes several fault models of system
+failure to memory and tested the system with thousands of reboot. This makes
+it more reliable.
+ 
+\textbf{Rio Vista}~\cite{riovista} is a combination of RVM and Rio.
+It is an evolutionarywork of Rio, and relate closely to RVM design.
+Like RVM, Rio Vista is a
+user-level, recoverable-memory library, and it runs on Rio. Unlike RVM,
+which has undo log and redo log, Rio Vista just has one undo log. When
+application starts a transcation, Rio Vista copies the origial data to the 
+undo log, which is kept in NVMM provided by Rio, and then application can
+write new data in-place and discards the undo log by the end of the transaction.
+
+Rio Vista is trying to be simple, handles only the basic transaction features
+of atomicity and persistency. Like Rio, it does not address the write ordering
+issue and CPU caching issue, which undermines its credability. 
+
+\textbf{Chell}~\cite{Chell} is the system we built that accelerate storage
+access with NVMM. Chell can be configured to work in two modes: \DAChell{}
+and \CChell{}. \DAChell{} accelerates access to files stored in file systems
+that reside solely in NVMM, while \CChell{} uses NVMM as a cache for the
+slower storage devices. Below we describe the architecture and implementation
+of \DAChell{} and \CChell{}.
+
+\subsection{\DAChell{}}
+
+\cfigure[Figures/ChellD-Stack.pdf,{\figtitle{\DAChell{} architecture}: by combining NVMM with the ability to map files into userspace, \DAChell{} provides applications with a fast, POSIX-compliant interface to data stored in NVMM.},fig:dachell]
+
+
+\DAChell{} works with a NVMM file system, gives applications direct access to
+a file's contents without
+requiring any interaction with the operating system in the common case.  As a
+result, it can eliminate both the system call overhead required to enter the
+kernel and the file system overhead required to locate stored data and perform
+permission checks.
+Figure~\ref{fig:dachell} shows the high-level architecture of
+\DAChell{}. An NVMM-aware file system (e.g.,
+PMFS~\cite{PMFS}) manages the NVMM space and allows users to create and manage
+files that reside in the NVMM.
+
+\DAChell{} is implemented as an user space library, \libd{}, that transparently interposes on file access system calls.
+\DAChell{} exploits DAX \texttt{mmap()} to make common-case access to file data
+fast.  When an application opens a file, \DAChell{} intercedes, and
+\texttt{mmap()}s the file's contents into the application's address space.
+This provides direct access to the file's data and transfers the permission and
+extent information from the file system's data structures into the
+application's page table, leveraging the processor's fast memory
+protection hardware to locate the file's data and protect its contents.
+
+When the application calls \texttt{read()} and \texttt{write()}, \DAChell{}
+translates them into calls to \texttt{memcpy()} to transfer data between
+application buffers and the memory mapped file.  Other operations such as
+\texttt{lseek()} simply update the state (e.g., the current file pointer) that
+\DAChell{} maintains about each open file.  Consequently, common-case accesses
+require no calls to the operating system, avoiding costly system calls and 
+operating system and file system overheads.
+
+\DAChell{} cannot eliminate all interactions with the operating system.  In
+particular, any operations that modify file system meta data still must enter
+the OS.  This means that \DAChell{} helps performance less for appends than for
+normal write operations, since it needs to make a system call to extend both
+the file and the in-memory mapping.  
+Also, the updates to the file's modification time do not occur as they
+would with normal accesses.  However, many performance-intensive applications
+already disable file modification and access time updates to improve
+performance.
+
+Below we discuss the POSIX compatibility and implementation details of
+\DAChell{}.
+
+\subsection{POSIX Emulation}
+
+\DAChell{} mimics the behavior of the normal POSIX file
+interface. It also
+enforce access restrictions (e.g., disallowing \texttt{write()} calls if the
+file opened read-only, even if the file's permissions allow modification).
+Implementing this functionality requires \DAChell{} to duplicate much of the
+information that the kernel would usually manage.  This includes file
+descriptor permission information, the close-on-exec flag, file position
+information, and file descriptor aliasing information. For file descriptors
+that point to files that don't reside in NVMM or that represent
+network sockets and other resource, \DAChell{} passes requests to the default
+POSIX functions that perform normal system calls.
+
+\DAChell{} avoids the need to modify application source code or recompile by
+using LD\_PRELOAD.  This allows \DAChell{} transparently link into the
+applications and interpose on calls to libc.
+
+\subsection{Implementation}
+
+After the POSIX emulation determines which data an read or write targets, the
+\DAChell{} translates the file operation into an operation on the memory mapped
+contents of the file.
+
+For each file being accessed via \DAChell{}, \DAChell{} divides the file into
+2~MB \emph{chunks}.  A B-tree store information about the file's
+\texttt{mmap()ed} chunks.  The key is the file offset, and the value is the
+mapped address and length.  For each access, \DAChell{} queries the tree for
+the mapping information.  If it finds the data, it performs a \texttt{memcpy()}
+to transfer data between application buffers and the memory mapped NVMM pages.
+
+If the file offset is not present in the B-tree, \DAChell{} uses
+\texttt{mmap()} to map the data into the application's addresss space. Then,
+it updates the B-tree and performs the \texttt{memcpy}.
+
+\DAChell{} \texttt{mmap()s} 2~MB at a time, because \texttt{mmap()} is expensive
+and when the file size changes, it may be necessary to remap the entire file. 
+Mapping two megabyte chunks amortizes the cost of mapping and reduces the need
+for remapping.  It also limits the number of memory-mapped regions the kernel
+must maintain. Each \texttt{mmap()} request allocates a
+virtual memory area (vma) in application's address space, and Linux kernel
+limits each process to have up to 65,536 vmas. If the requests are small and
+frequent, \texttt{mmap()}ing each of them will exhaust this number very quickly.
+For small requests, the 2~MB \texttt{mmap()} also works as a prefetching
+mechanism, reduce the overhead for small sequential requests.
+
+\DAChell{} issues \texttt{mmap()} with the MAP\_POPULATE flag set to force the kernel to
+populate the application's page table immediately.  Without the flag, the first
+access to each page causes a page fault, degrading performance.
+
+\DAChell{} relies on the DAX-style behavior of \texttt{mmap()} that maps NVMM
+directly into the application's address space.  DAX-like functionality has
+existed in some file systems for many years.  It used to be called
+\emph{eXecute In Place}, or XIP, and mostly found use in embedded systems that
+needed to execute
+code directly from NOR flash devices.  DAX capabilities are already present in
+PMFS~\cite{PMFS} and efforts are underway to add it to other file sysetms~\cite{ext4dax}.
+
+With micro- and macro-benchmark, We found that \DAChell{} improves 4~kB access
+latency by up to 19\% relative to file access through a PMFS, and improves
+Berkeley-DB performance by 6\% over PMFS.
