@@ -148,9 +148,11 @@ uses a batched and delayed metadata update mechanism, only when updates need to
 be visible to other clients. Another optimization Aerie does is to using
 a in-memory cache of path names to speed up name resolution.
 
-Aeire designs a file system, PXFS wich complies with POSIX semantics. To further show the impact of POSIX interfaces on performance, they also design a flat
+Aerie designs a file system, PXFS wich complies with POSIX semantics.
+To further show the impact of POSIX interfaces on performance, they also design a flat
 key-value store storage system (FlatFS), which applications access file
-through a simple put/get/erase interface. FlatFS is simpler, avoiding the overhead of name resolution and accelerates file sharing. The evalution shows FlatFS
+through a simple put/get/erase interface. FlatFS is simpler, avoiding the
+overhead of name resolution and accelerates file sharing. The evalution shows FlatFS
 outperforms PXFS by up to 109\%, leading us to rethink the file system interface design.
 
 Echo~\cite{echo} explores the NVMM with key value stores. Echo is a lightweight,
@@ -159,7 +161,8 @@ while DRAM is a thin layer to offset the performance and wear-out weakness of
 NVMM.
 
 Echo supports concurrency, data consistency, recoverability and scalability
-by employing transactions and snapshot isolation. The database of Echo is organized as a sequence of snapshots. A snapshot consists of a unique, monotonically
+by employing transactions and snapshot isolation. The database of Echo is
+organized as a sequence of snapshots. A snapshot consists of a unique, monotonically
 increasing snapshot number and a set of key-value pairs. Each transaction
 commitment creates a new snapshot with a new snapshot number. 
 
@@ -203,4 +206,3 @@ word log for metadata updates, and coarse-grained object log for object
 updates. word log contains the full metadata, while object log indicates
 the address and size of the object. This reduces log size and NVMM writes for
 object as eliminates the need to log the entire object.
-For big size objects, the log only 

@@ -65,9 +65,28 @@ updated atomically. This may result in cascade update up to the root.
 \end{itemize}
 %\textbf{Protection} 
 
+\textbf{eNVy} eNVy~\cite{eNVy} is a early exploration of NVMM storage system
+design. It proposes a system that attaches flash to the memory
+bus, and using SRAM to achieve high bandwidth and low latency. At that time
+there is no real byte-addressable NVMM technology, so eNVy uses flash memory
+as main storage device. To expose the byte-addressable capability to 
+applications, eNVy uses battery backed SRAM as a write buffer and performs
+copy-on-write on flash memory pages. eNVy also stores the page table inside
+SRAM, and perform cleaning in the background to guarantee write latency and
+bandwidth. To do the cleaning efficiently, eNVy divide flash pages into
+segments and lower the utilizations of hot segments to reduce the cleaning
+time.
 
-BPFS~\cite{BPFS} is a good example to show how to design a NVMM file system,
-and demonstrates the challenges in the implementation. BPFS guarantees that
+eNVy is not using real byte-addressable NVMM devices, but its implementation
+shows insight for SSD designs. Current commercial SSD works mainly like
+eNVy: SSD uses DRAM as write buffers, deploy FTL layer to do the page remapping
+, and perform garbage collection in the background to provide available flash
+pages and wear leveling.
+
+
+\textbf{BPFS} BPFS~\cite{BPFS} is a good example to show how to design a NVMM
+file system, and demonstrates the challenges in the implementation.
+BPFS guarantees that
 each file system operation is performed atomically and in order.
 
 BPFS provides these guarantees with software implementation and hardware
@@ -120,7 +139,8 @@ bits and capacitors to CPUs.
 With hardware support, BPFS implements a transactional file system for NVMM
 and gains better performance than traditional file systems.
 
-SCMFS~\cite{scmfs} is a file system designed for NVMM that reuses the memory
+\textbf{SCMFS} SCMFS~\cite{scmfs} is a file system designed for NVMM that
+reuses the memory
 management module in the operating system to reduce the implementation
 complexity. SCMFS aims to minimize the CPU overhead of the file system
 operations, and also assign each file to a contiguous virtual address space
@@ -159,8 +179,8 @@ metadata while allocating superpages for larger files, file system performance
 improves with less TLB misses.
 
 
-
-PMFS~\cite{PMFS} is another NVMM file system. It is aiming to provide a
+\textbf{PMFS} PMFS~\cite{PMFS} is another NVMM file system. It is aiming to
+provide a
 light-weight POSIX file system that exploits NVMM's byte-addressability to
 avoid overheads of block layer and enable direct NVMM access by application.
 PMFS only requires a simple hardware primitive to provide software enforceable
@@ -205,3 +225,7 @@ TLB entries. ~\cite{mmfs} is another implementation of NVMM file system
 whichi supports XIP interface. It integrates memory management with file system
 to manage NVMM, allocate NVMM in pages and directly map to application
 address space to gain better performance.
+
+
+\subsection{Conclusion} 
+\label{sec:fs-conclude}

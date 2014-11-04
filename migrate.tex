@@ -1,28 +1,32 @@
 \section{Page migration} 
 \label{sec:migration}
 
-Current non-volatile memory technologies, such as phase change memory
-~\cite{PCMHierarchy}, STT-RAM and memristors, all suffer from slower writes and
-limited endurance comparing to DRAM.
+Although NVMM has low power consumption and high density comparing to DRAM,
+It is still not good enough to replace DRAM entirely due to the slow write
+latency and low endurance. We expect in the future DRAM and NVMM
+will reside on the system memory bus together.
 Thus, how to utilize NVMM's persistency property while reduce the writes to
 NVMM to hide the write latency and extend endurance becomes an interesting
 topic and several researches contributes to this area.
 
 In the hybrid system installed with both DRAM and NVMM, how to allocate
-pages to exploit the performance of these two memories is a question.
+pages to exploit the performance of these two memories is a open question.
 \cite{pcmalloc} allocate heap and stack segments with DRAM pages, and allocate
 NVMM pages to other segments, because heap and stack segments are updated
 frequently, while text segment is read only, and bss/data segments are
 updated infrequently. These allocation mechanism allocates write-intensive
-pages in DRAM and reduce the writes to NVMM. \cite{pcm3d} combines the DRAM
+pages in DRAM and reduce the writes to NVMM. \textbf{PCM3D}~\cite{pcm3d}
+combines the DRAM
 and NVMM ares in a large flat memory region and migrate write-intensive pages
 to DRAM. The migration is performed in operating system and target the
 frequently written pages, while leave the read-intensive pages in NVMM.
-PDRAM~\cite{pdram} introduces a hybrid PRAM and DRAM main memory system, 
+\textbf{PDRAM}~\cite{pdram} introduces a hybrid PRAM and DRAM main memory
+system, 
 relies on a hardware memory controller to log the write counts to each page,
 while a software module swap pages between DRAM and NVMM and does wear-leveling.
 
-RaPP~\cite{RaPP} implements the page migration inside the memory controller
+\textbf{RaPP}~\cite{RaPP} implements the page migration inside the memory
+controller
 to monitor access patterns and migrate pages between NVMM and DRAM. Rapp
 proposes a complicate memory controller design with a rank-based page
 placement policy. Depending on the access patterns to pages, RaPP create
@@ -33,7 +37,7 @@ to PCM across many physical frames. By putting the page placement policy
 inside memory controller, RaPP achieves better performance than software
 solution, but with more sophisticated hardware design.
 
-Memorage~\cite{memorage} argues that NVMM-based systems will have large
+\textbf{Memorage}~\cite{memorage} argues that NVMM-based systems will have large
 capacity of NVMM that need to be managed as both memory and storage in
 an integrated manner to make the best performance and trade-offs. For exmaple,
 fast, high-endurance SLC PCM can be used as main memory
@@ -48,7 +52,8 @@ memory shortage.
 2. As long as NVMM storage device has extra capacity, Memorage can use it
 to relax the write endurance of NVMM main memory and facilitate wear-leveling.
 
-NVM Duet~\cite{duet} provides flexible solution to the applications which
+\textbf{NVM Duet}~\cite{duet} provides flexible solution to the applications
+which
 have different expectations of NVMM: some are seeking the persistency, while
 others just use NVMM as normal DRAM. As consistency is achieved via serializing
 write operations and CPU cache flushing, differentiate between the two usages

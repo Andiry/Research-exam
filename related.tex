@@ -10,24 +10,6 @@ kernel, and implements file system permission check in hardware to provide
 protection to files. It also supports dirty data tracking and LRU eviction
 in hardware.
 
-eNVy~\cite{eNVy} is a early exploration of NVMM storage system design.
-It proposes a system that attaches flash to the memory
-bus, and using SRAM to achieve high bandwidth and low latency. At that time
-there is no real byte-addressable NVMM technology, so eNVy uses flash memory
-as main storage device. To expose the byte-addressable capability to 
-applications, eNVy uses battery backed SRAM as a write buffer and performs
-copy-on-write on flash memory pages. eNVy also stores the page table inside
-SRAM, and perform cleaning in the background to guarantee write latency and
-bandwidth. To do the cleaning efficiently, eNVy divide flash pages into
-segments and lower the utilizations of hot segments to reduce the cleaning
-time.
-
-eNVy is not using real byte-addressable NVMM devices, but its implementation
-shows insight for SSD designs. Current commercial SSD works mainly like
-eNVy: SSD uses DRAM as write buffers, deploy FTL layer to do the page remapping
-, and perform cleaning in the background to provide available flash pages
-and wear leveling.
-
 \cite{Mogul} describes the necessary operating system support for
 NVM+DRAM hybrid main memory. The paper explores two possible NVM devices:
 flash memory and PCM device to reside on the memory bus. As flash memory
