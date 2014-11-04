@@ -156,3 +156,127 @@ PMFS~\cite{PMFS} and efforts are underway to add it to other file sysetms~\cite{
 With micro- and macro-benchmark, We found that \DAChell{} improves 4~kB access
 latency by up to 19\% relative to file access through a PMFS, and improves
 Berkeley-DB performance by 6\% over PMFS.
+
+\subsection{\CChell{}: Accelerating Legacy Storage with NVMM}
+\label{sec:overview}
+
+\DAChell{} is useful if the entire file system resides in NVMM, but many
+storage systems are too large to fit in NVMM.  To improve
+performance of these systems, \Chell{} provides an alternative mode of
+operation called \CChell{}.  \CChell{} uses NVMM to provide a reliable,
+consistent, write-back cache of data that resides in an existing file system.
+\CChell{} provides fast access to the cached data using the same techniques
+that \DAChell{} uses but it accesses cached data rather than actual file data.
+This section and the next describe the differences between \CChell{}
+and \DAChell{}.
+
+Figure~\ref{fig:CChellstack} shows the system architecture of \CChell{}.
+Like \DAChell{}, there is an userspace library, \lib{} to handle cache
+hits, but \CChell{} also adds a kernel module, \drv{}, to
+manage the contents of the cache and interact with the file system on the
+backing store device.
+
+The only difference in \libd{} and \lib{} is in
+how they detect and react to a miss.  \Libd{} detects a miss when it
+finds that its B-tree does not contain an entry for the file location the
+application is trying to access.  This occurs the first time the application
+accesses each chunk.  Its response is simple, issues an \texttt{mmap()} to map
+the chunk.
+
+\Lib{} can also experience a miss when an entry is missing from its B-tree.
+But a miss can also manifest itself as a segmentation fault, if the data was
+mapped into userspace but the kernel had to evict it to make room for other
+data.
+In both cases, \lib{} issues an \texttt{ioctl()} to \drv{} requesting that
+it load the data from the backing store (if needed), and then map the data into
+the application's address space.
+
+\Drv{} manages the data cached in the NVMM.
+It copies data between cache pages and the backing store device,
+memory maps the requested cache pages to the application's address space,
+and handles cache write back and eviction.
+
+When \drv{} receives the \texttt{ioctl} request from \lib{},
+it first checks the
+file Inode permission to make sure it is a valid request.  Then it checks if 
+the requested data is in the cache,
+and loads it, if required.
+Next, \drv{} copies data from the user buffer to the cache pages if it is
+a write, or from the backing store device to the cache pages and user buffer if 
+it is a read. Then it calls \texttt{mmap()} to map the cache pages to
+the application's address space and returns the mapped address and length
+to \lib{}.
+
+%\cfigure[Figures/Chell-Stack.pdf,{\figtitle{\CChell{} system stack}},fig:CChellstack]
+
+\begin{figure}
+\includegraphics{Figures/Chell-Stack.pdf}
+\caption{\CChell{} architecture: \CChell{} caches files stored on slow storage
+devices in NVMM, provides a fast, POSIX-compliant interface to applications.}
+\label{fig:CChellstack}
+\end{figure}
+
+By default \CChell{} requires all the applications to access the NVMM cache via
+\lib{}.  Otherwise, if one application accesses a cached file via \CChell{}, while another
+application accesses the same file on the backing store device via POSIX write,
+\CChell{} and the file system on the backing store device will have an
+inconsistent view about the file.  To prevent this inconsistency, \drv{}
+interposes at the block device driver for the backing store and rejects
+accesses that touch cached data but that are not from applications using \lib{}.
+
+
+The space allocation and management system in \drv{} is based on PMFS.  It
+allocates NVMM in 4~kB pages to minimize fragmentation and wasted space for
+small files.  For file systems that store mostly large file, larger 2~MB or
+1~GB pages would improve
+TLB performance, reduce the number of page faults, and shrink the page table.
+
+\CChell supports DAX interface for \texttt{mmap()} operation.
+The cache page will be mapped directly to the application's
+address space and avoids the overhead of the page cache and the block layer
+for normal \texttt{mmap()} operations.
+Like \DAChell{}, \CChell{} divides the cached file into 2~MB chunks and
+\texttt{mmap()} with 2~MB granularity.
+
+When the cache is full and \drv{}
+needs to evict cache pages, it needs to decide which cache pages to evict
+and whether the cache pages are dirty. As \lib{} accesses the NVMM directly
+on cache hits and \drv{} is unaware of many accesses to the cache data, this
+becomes a challenge to \drv{}.
+
+\drv{} maintains a LRU list of accessed files and always try to evict the least
+recently accessed cache pages. Since we managed the LRU list as a queue,
+the result is a blend of LRU and FIFO.
+\CChell{} also leverages the virtual memory manager of operating system to
+track the dirty cache pages. 
+when a memory page is written, the hardware set the dirty bit in the 
+page table entry (PTE) of the page. Before evicting a cache page,
+\drv{} looks up the PTE in all the mappings of the page.  If
+any PTE has its dirty bit set, \drv{} will write the cache page back to
+backing store.
+
+\CChell{} uses undo logging to ensure that the cache metadata remains
+consistent in the event of a crash.  Whenever \drv{} needs to make
+a change to a Cnode, allocate a Cnode, or re-allocate pages,
+\drv{} records the data in the log and makes it persistent before writing
+the new data in place.
+
+Every metadata change is organized as a transaction.  \Drv{} starts
+a transaction by allocating the required number of log entries in the journal.
+Then, \drv{} fills the log entries with old metadata.
+Each log entry is written to the journal and made persistent by flushing it
+to NVMM before new data is written in-place.
+After all the updates are finished, \drv{} commits the transaction
+by writing a special ``finish'' log entry to the journal to invalidate the undo information.
+
+If there is a power failure or system crashes, \drv{} can recover the cache
+when the system reboots.  During recovery, \drv{} locates the log area using
+the superblock,
+identifies uncommitted transactions and applies the undo information in the log
+to restore the metadata.
+After all the uncommitted transactions have been undone, \CChell{} is in a
+consistent state.
+
+Evaluation result shows \CChell{} can
+reduce 4~kB access latency by up to 50\% and improve Berkeley-DB performance
+by up to 4.8\x{} relative to file access using the system's file buffer.

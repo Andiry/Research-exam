@@ -23,8 +23,8 @@ describe the implementation details about \CChell{}.
 
 The space allocation and management system in \drv{} is based on PMFS.  It
 allocates NVMM in 4~kB pages to minimize fragmentation and wasted space for
-small files.  For file systems that store mostly large file, larger 2~MB or 1~GB pages
-would improve
+small files.  For file systems that store mostly large file, larger 2~MB or
+1~GB pages would improve
 TLB performance, reduce the number of page faults, and shrink the page table.
 
 \CChell{} uses \emph{cache nodes (Cnode)} to manage cached files.
