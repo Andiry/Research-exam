@@ -58,6 +58,50 @@ cycles. Currently memristor is still under development in the laboratory.
 	\label{table:techtrend}
 \end{table}
 
-\subsection{NVRAM on Background}
+\subsection{Non-volatile memory on memory bus}
 \label{sec:background}
+
+When non-volatile memory emerges, there have been researches about how to
+integrate it into the system. They can be used to build solid state drives
+instead of NAND flash, and NVM Express~\cite{NVMe} targets at accessing
+non-volatile memory devices attached through the PCIe bus. However, due to
+its byte-addressable and low-latency, high-bandwidth resemble to DRAM,
+put them on the processor memory bus become the most reasonable solution
+to fully exploit the performance of non-volatile memory.
+
+Although using NVMM as system memory and access them like DRAM is simple,
+this approach does not utilie the persistence property of NVMM. Also, the
+high write latency and limited endurance comparing to DRAM makes NVMM not
+suitable to replace DRAM direcly, and system software is necessary to
+manage the NVMM.
+
+Numerous researches propose different system software designs to
+manage the NVMM. In this paper we introduce some of the solutions and describe
+them in details in the following sections.
+
+
+\begin{itemize}
+\item \textbf{DRAM extension} With the low power comsumption and high density,
+NVMM is a good extension to DRAM to increase the system memory size. These
+researches focus on how to migrate memory pages between DRAM and NVMM.
+
+\item \textbf{File system} With the persistence property NVMM is suitable for
+user data storage, and manage it with a file system to provide applications
+fast access is a good way to utilize NVMM. NVMM file system is compatible
+with POSIX API, does not require software modification, but need to take care
+of the consistency issue.
+
+\item \textbf{Access model} Although NVMM file system is capable of exposing
+the NVMM to the applications, the mode switch and VFS layer still adds
+overhead. Some papers are investigating fast and safe accessing models of
+NVMM, grant applications direct access to the NVMM. These solutions have
+good performance but require software modifications.
+
+\item \textbf{Caching and acceleration} With low-latency and high-bandwidth,
+NVMM is able to work as a consistent cache for slower storage devices. As
+DRAM is largely used as page cache today, using NVMM as cache has additional
+benefits that it is persistent and does not to sync to disk as page cache
+does.
+
+\end{itemize}  
 
