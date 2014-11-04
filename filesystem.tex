@@ -3,7 +3,7 @@
 
 To efficiently make use of the NVMM and expose a user-friendly
 interface to applications, system software developers need to consider
-how to manage NVMM and work with user space applications smoothly.
+how to manage NVMM and work with existing space applications smoothly.
 As NVMM can be treated as storage device, file system is a straight forward
 way to manage the NVMM.
 
@@ -11,13 +11,64 @@ However, although NVMM is non-volatile, its difference from slow storage
 devices makes the NVMM file system design needs to consider several special
 characteristics:
 
+\ignore{
+\begin{itemize}
+\item Performance. 
+\item Persistency.
+\end{itemize}
+}
 
+\textbf{Performance} Traditional storage devices are sitting on I/O bus
+(like SATA and USB) or high performance system bus such as PCIe. To access
+them, applications need to pay the software overhead of mode switch, VFS and
+block layer. For slow storage devices the software overhead is negligible,
+but with NVMM the story is different. As NVMM has access latency close to
+DRAM, the processors should access them directly via load and store
+operations to fully exploit the NVMM performance.
+
+
+
+\textbf{Consistency} Modern processors may reorder write operations to improve
+performance. This is not an issue for DRAM because the cache consistency
+protocols provide all the processors with a consistent view of the memory.
+However, out-of-order writes to NVMM may leave the software (for example,
+file system) in an inconsistent state if a power failure occurs. Software
+for NVMM must take caution of the consistency issue. 
+
+To overcome the write reordering issue, several solutions are proposed:
+
+\begin{itemize}
+\item Use write-through caching to make sure for each operation
+data is flushed to the NVMM. This is a slow approach. 
+\item Flush the entire cache when encounter a memory barrier. This solution
+adds significant overhead to the performance.
+\item Track the dirty cache lines and flush them accordingly. This is much
+more efficient than flushing the entire cache, but may need software bookkeeping.
+\item Use hardware primitives. This is the most efficient approach, but requires
+hardware modifications.
+\end{itemize}
+
+Another inconsistency issue comes from the power failure during a single
+write operation. If the write operation is not atomic, the data is left
+in an inconsistent state. The common approaches to overcome the issue includes:
+
+\begin{itemize}
+\item Hardware atomic operations. This solution is simple but may require
+hardware modifications.
+\item Logging. Logging is a widely-used mechanism in file system and databases
+to ensure write atomicity. There are two kinds of logging: Undo logging, which
+saves the original value to the log and then update in place; Redo logging,
+which write the new data to the log and then copy to the target place.
+\item Copy-on-write operation. This is used in tree structure updates. Whenever
+update the node, a new node is created and the pointer in the parent node is
+updated atomically. This may result in cascade update up to the root.
+\end{itemize}
+%\textbf{Protection} 
 
 
 BPFS~\cite{BPFS} is a good example to show how to design a NVMM file system,
 and demonstrates the challenges in the implementation. BPFS guarantees that
-file system writes will become durable on the NVMM when it flushes the cache
-and each file system operation is performed atomically and in order.
+each file system operation is performed atomically and in order.
 
 BPFS provides these guarantees with software implementation and hardware
 primitives. In software part, it uses \emph{short-circuit shadow paging}
@@ -62,7 +113,7 @@ these operations are expensive and undermines performance. Instead, BPFS uses
 epoch barrier to resolve the issue. An epoch is a batch of write operations,
 and hardware guarantees that epochs are committed to NVMM in program order.
 With the epoch barrier all the current writes cannot proceed until all the
-writes in the previous epochs are committed to NVMM and file system consitency
+writes in the previous epochs are committed to NVMM and file system consistency
 is maintained. BPFS implements the epoch barrier primitive by adding counters,
 bits and capacitors to CPUs.
 
