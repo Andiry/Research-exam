@@ -6,11 +6,14 @@ phase change memory (PCM), and
 memristor-based memories~\cite{moneta, monetad, quicksan,Onyx,
 pollisbetterthaninterrupt}
 promise to revolutionize IO performance and how
-systems manage and provide access to persistent state. The most aggressive
+systems manage and provide access to persistent state. Table~\ref{table:techtrend}
+shows the characteristics of these NVM technologies. The most aggressive
 proposals for integrating these technologies place them on the processor's
 memory bus alongside or replacing conventional DRAM, leading to non-volatile
-main memory (NVMM)-based systems~\cite{PCM_EfficientMainMemory, PCMHierarchy,eNVy,WSP}. The close coupling of compute and
-non-volatility in NVMM systems will force system designers to rethink how software interacts with storage, if applications are going to reap the benefits of NVMM.
+main memory (NVMM)-based systems~\cite{PCM_EfficientMainMemory,
+PCMHierarchy,eNVy,WSP}. The close coupling of compute and
+non-volatility in NVMM systems will force system designers to rethink how
+software interacts with storage, if applications are going to reap the benefits of NVMM.
 
 As NVMM provides latency and bandwidth comparable to DRAM, new problems
 appear if the processors directly access them as DRAM. One problem is 
@@ -31,6 +34,20 @@ thereof) to support legacy applications.  Researchers have proposed specialized
 file systems for NVMMs~\cite{PMFS,BPFS}, non-volatile
 caches~\cite{RVM,riovista}, and new programming
 models~\cite{nvheaps,mnemosyne}.
+
+The remainder of the paper is organized as follows. Section
+~\ref{sec:background} introduces the background on the NVMM technologies
+and Section~\ref{sec:overall} shows the different approaches to utilize
+the NVMM in the system.
+Section~\ref{sec:filesystem} discusses the NVMM file system design principles and
+challenges.
+In Section~\ref{sec:caching} we show the systems that use NVMM as a cache
+to accelerate storage access, and
+Section~\ref{sec:access-model} shows the accessing models to access NVMM
+efficiently.
+Section~\ref{sec:migrate} introduces the design of systems with both DRAM and NVMM
+. Section~\ref{sec:related} introduces
+related work and Section~\ref{sec:conclude} summarizes our conclusion.
 
 
 
@@ -79,17 +96,6 @@ that would allow for simpler, faster access to file data.  These changes would
 allows applications to more fully benefit from NVMM performance without
 requiring invasive changes in how they access and manage non-volatile data.
 }
-
-The remainder of the paper is organized as follows. Section
-\ref{sec:system-quill} introduces \DAChell{} architecture and implementation,
-and Section~\ref{sec:results-quill} evaluates the performance of \DAChell{}.
-Section~\ref{sec:overview} gives a overview of \CChell{} architecture, and
-describes the system implementation details of \CChell{}.
-Section~\ref{sec:results-chell} evaluates the
-performance of \CChell{}, and Section~\ref{sec:noposix} introduces our effort
-to improve the POSIX interface. Section \ref{sec:related} introduces
-related work and Section \ref{sec:conclude} summarizes our conclusion.
-
 
 
 
