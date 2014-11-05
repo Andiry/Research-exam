@@ -7,18 +7,21 @@ processor memory bus. These Non-volatile Main Memories (NVMM)
  will allow software to access persistent data with
 extremely low latency and high bandwidth. However, existing storage
 architectures introduce significant overhead that can dominate the low-latency
-of persistent memories. For example, if NVMM is accessed as traditional
-storage device, the performance is undermined by the software overhead of
-POSIX interface, mode switch and block layer. 
+of persistent memories. As a fact, new software accessing models are required
+to access NVMM to exploit the performance.
 
-Although just access NVMM as DRAM is a simple solution and provide good
+On the other hand, although just access NVMM as DRAM is a simple solution
+ and provide good
  performance, current CPU cache hierarchy and write reordering neutralizes
 the persistency of NVMM, and the slow write latency and endurance of NVMM makes
  it different from DRAM and requires special system software design. 
-In this paper, we survey the different software solutions to exploit
-the performance potential of NVMM as well as its persistent property,
-examines challenges and opportunities NVMM brings to system software
-design.
+
+In this paper, we investigate the different software solutions to exploit
+the performance potential of NVMM as well as its persistent property.
+We divide the approaches into four major categories: DRAM extension,
+file system, programming model and caching and acceleration. We
+examine each category,  specify the challenges and opportunities NVMM brings
+ to system software design.
 The paper also introduces our own work to accelerate storage access with
 NVMM.
 

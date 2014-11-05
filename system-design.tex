@@ -7,7 +7,8 @@ and hardware primitive support. However, these solution are difficult
 to implement with legacy software and hardware, and they also add extra
 overheads. Some researches try to find a simple and low-overhead solution.
 
-WrAP~\cite{WrAP} proposes a system architecture that provides persistence
+\textbf{WrAP}~\cite{WrAP} proposes a system architecture
+ that provides persistence
 ordering, persistence atomicity and persistence protection guarantees. 
 WrAP consists of three components: a victim persistence cache (VPC); a log
 area of NVMM that keeps log of update operations and an asynchronous channel
@@ -33,27 +34,4 @@ uses VPC to hold PCM entries evicted from CPU cache, while SoftWrAP
 uses alias update, routes the cache entries to write to a different location
 without affecting the original data. SoftWrAP achieves the same persistent
 guarantee as WrAP without hardware modification.
-
-WSP~\cite{WSP} stands for whole-system persistence. It aims at systems where
-all memory is NVMM, and it transparently recovers an application's entire state,
-making a system failure appear as a suspend/resume event. WSP does not
-do anything about logging or explicit CPU cache flushing; instead, it does 
-\emph{flush-on-fail}, which flushes CPU registers and cache lines to NVMM
-on system failure, using a small residual energy window provided by system
-power supply. As WSP does not flush during normal operations, it eliminates
-the runtime overhead of flushing CPU cache lines on each update entirely, also
-it does not require any software modification such as NV-heaps~\cite{nvheaps}
- and Mnemosyne~\cite{mnemosyne}.
-
-WSP consists of NVMM devices, a hardware power monitor, and software suspend/resume routines. When the WSP system fails, the hardware power monitor triggers
-an interrupt to the CPU core. All the CPU cores flush their cache lines to the 
-NVMM and then halts. On the recovery, resume routine does the inverse to recover
-the system to the consistent state. As WSP eliminates the runtime persistency
-operations, it shows good performance comparing to NV-heaps.
-
-A remaining issue of WSP is device recovery. As the device drivers are restored
-but the devices lost power and need to re-initialize, the state of software
-and hardware is not consistent. WSP proposes to clean up device state on
-the resume path, or virtualize the devices by using a VM hypervisor.
-
 

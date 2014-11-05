@@ -1,4 +1,4 @@
-\section{Access model} 
+\section{Programming model} 
 \label{sec:access}
 
 With the emergence of non-volatile memory, the accessing model needs
@@ -78,7 +78,8 @@ declare persistent objects and modify their softwares.
 \mnem{} has some limitations. It does not support persistent region sharing
 between processes. Also it does not address the wearout issue of NVMM.
 
-CDSMM~\cite{CDSMM} also presents the memory management module design for NVMMs.
+\textbf{CDSMM}~\cite{CDSMM} also presents the memory management module design
+ for NVMMs.
 Rather than performance, it focuses on security and protection: it introduces
 techniques for 1) robust wear-aware memory allocation, 2) preventing for 
 erroneous writes, and 3) consistency-perserving updates that are cache-efficient.
@@ -103,7 +104,8 @@ the values in a node is not in sorted order and it takes linear time to search
 value in a node. CDSMM has several interesting ideas about NVMM protection, but
 to integrate the design in applications is still difficult.
 
-CDDS~\cite{cdds} proposes a consistent and durable data structure for NVMM.
+\textbf{CDDS}~\cite{cdds} proposes a consistent and durable data structure for
+ NVMM.
 Instead of logging, CDDS works like snapshot file systems such as
 WAFL~\cite{wafl} and ZFS~\cite{zfs}, uses version control to organize data,
 makes it possible to rollback to earlier persistent versions during crash
@@ -127,7 +129,7 @@ CDDS shows the version-based design of the data structure on persistent
 memory. However, the implementation is complicated and specific. We still
 need to find out a more generic way to access the NVMM.
 
-Aerie~\cite{Aerie} tries to reduce the software overhead to access NVMM
+\textbf{Aerie}~\cite{Aerie} tries to reduce the software overhead to access NVMM
 by redesigning the file system interfaces. Aerie exposes the file system
 data stored in NVMM directly to user-mode programs. Applications link to
 a user space library that provides local access to data and a OS kernel
@@ -156,7 +158,8 @@ through a simple put/get/erase interface. FlatFS is simpler, avoiding the
 overhead of name resolution and accelerates file sharing. The evalution shows FlatFS
 outperforms PXFS by up to 109\%, leading us to rethink the file system interface design.
 
-Echo~\cite{echo} explores the NVMM with key value stores. Echo is a lightweight,
+\textbf{Echo}~\cite{echo} explores the NVMM with key value stores.
+ Echo is a lightweight,
 persistent key value store system. The data is stored persistent in NVMM,
 while DRAM is a thin layer to offset the performance and wear-out weakness of
 NVMM.

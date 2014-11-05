@@ -2,7 +2,8 @@
 \label{sec:recovery}
 
 Several early researches focus on how to recovery the system with NVMMs.
-RVM~\cite{RVM} is an efficient, portable and easily used implementation of
+\textbf{RVM}~\cite{RVM} is an efficient,
+ portable and easily used implementation of
 recoverable virtual memory for Unix enviorments. By eliminating the support
 for nesting, distribution and concurrency control, the implementation of 
 RVM becomes very simple and easy to use. RVM manages recoverable memory in
@@ -11,4 +12,28 @@ calls the interfaces provided by RVM to begin and commit transactions. RVM
 uses a undo/redo logging strategy to make the persistency guarantee. Old values
 are copied to undo log, while new values are written to the redo log. Applications call log control commands to force redo log to write into the disks
 and become persistent.
+
+\textbf{WSP}~\cite{WSP} stands for whole-system persistence.
+ It aims at systems where
+all memory is NVMM, and it transparently recovers an application's entire state,
+making a system failure appear as a suspend/resume event. WSP does not
+do anything about logging or explicit CPU cache flushing; instead, it does 
+\emph{flush-on-fail}, which flushes CPU registers and cache lines to NVMM
+on system failure, using a small residual energy window provided by system
+power supply. As WSP does not flush during normal operations, it eliminates
+the runtime overhead of flushing CPU cache lines on each update entirely, also
+it does not require any software modification such as NV-heaps~\cite{nvheaps}
+ and Mnemosyne~\cite{mnemosyne}.
+
+WSP consists of NVMM devices, a hardware power monitor, and software suspend/resume routines. When the WSP system fails, the hardware power monitor triggers
+an interrupt to the CPU core. All the CPU cores flush their cache lines to the 
+NVMM and then halts. On the recovery, resume routine does the inverse to recover
+the system to the consistent state. As WSP eliminates the runtime persistency
+operations, it shows good performance comparing to NV-heaps.
+
+A remaining issue of WSP is device recovery. As the device drivers are restored
+but the devices lost power and need to re-initialize, the state of software
+and hardware is not consistent. WSP proposes to clean up device state on
+the resume path, or virtualize the devices by using a VM hypervisor.
+
 

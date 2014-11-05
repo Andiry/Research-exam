@@ -4,7 +4,11 @@
 Three emerging non-volatile memory technologies promise to provide fast,
  non-volatile, byte-addressable memories: spin-torque transfer RAM (STT-RAM),
 phase change memory (PCM), and memristor-based memories. In the following
-sections we briefly introduce each of them.
+sections we briefly introduce each of them, then we introduce the software
+for NVMM and challenges they face.
+
+\subsection{Non-volatile memory technologies}
+\label{sec:hardware}
 
 \textbf{Phase Change Memory} is a promising non-volatile byte-addressable
 memory technology. PCM is built with Chalcogenide-based materials, which has
@@ -51,15 +55,15 @@ cycles. Currently memristor is still under development in the laboratory.
 	Non-volatile & No & Yes & Yes & Yes \\\hline
 	Read Time (ns) & 10 & 10-50 & 10-35 & ? \\\hline
 	Write Time (ns) & 10 & 50-500 & 10-90 & ? \\\hline
-	Endurance & $10^{15}$ & $10^{9}$ & $10^{15}$ & ? \\\hline
+	Endurance & $10^{15}$ & $10^{9}$ & $10^{15}$ & $10^{10}$ \\\hline
 	\end{tabular}}
 	\vspace*{1mm}
 	\caption{\figtitle{Properties of Non-volatile memory technologies}}
 	\label{table:techtrend}
 \end{table}
 
-\subsection{Non-volatile memory on memory bus}
-\label{sec:background}
+\subsection{Software for non-volatile memory on memory bus}
+\label{sec:NVMM}
 
 When non-volatile memory emerges, there have been researches about how to
 integrate it into the system. They can be used to build solid state drives
@@ -76,26 +80,26 @@ suitable to replace DRAM direcly, and system software is necessary to
 manage the NVMM.
 
 Numerous researches propose different system software designs to
-manage the NVMM. In this paper we introduce some of the solutions and describe
-them in details in the following sections.
-
+manage the NVMM. Typical solution can be divided into the following
+four major categories:
 
 \begin{itemize}
-\item \textbf{DRAM extension} With the low power comsumption and high density,
-NVMM is a good extension to DRAM to increase the system memory size. These
-researches focus on how to migrate memory pages between DRAM and NVMM.
-
 \item \textbf{File system} With the persistence property NVMM is suitable for
 user data storage, and manage it with a file system to provide applications
 fast access is a good way to utilize NVMM. NVMM file system is compatible
 with POSIX API, does not require software modification, but need to take care
 of the consistency issue.
 
-\item \textbf{Access model} Although NVMM file system is capable of exposing
+\item \textbf{Programming model} Although NVMM file system is capable
+ of exposing
 the NVMM to the applications, the mode switch and VFS layer still adds
 overhead. Some papers are investigating fast and safe accessing models of
 NVMM, grant applications direct access to the NVMM. These solutions have
 good performance but require software modifications.
+
+\item \textbf{DRAM extension} With the low power comsumption and high density,
+NVMM is a good extension to DRAM to increase the system memory size. These
+researches focus on how to migrate memory pages between DRAM and NVMM.
 
 \item \textbf{Caching and acceleration} With low-latency and high-bandwidth,
 NVMM is able to work as a consistent cache for slower storage devices. As
@@ -105,3 +109,60 @@ does.
 
 \end{itemize}  
 
+In this paper we introduce some major contributions of each categories
+ and describe them in details in the following sections.
+
+\subsection{Challenges for NVMM software}
+\label{sec:challenge}
+
+Although NVMM is sitting on the system memory bus and can be accessed
+via load and store operations like DRAM, its difference from DRAM
+makes the NVMM software design needs to consider several special
+characteristics:
+
+\textbf{Performance} Traditional storage devices are sitting on I/O bus
+(like SATA and USB) or high performance system bus such as PCIe. To access
+them, applications need to pay the software overhead of mode switch, VFS and
+block layer. For slow storage devices the software overhead is negligible,
+but with NVMM the story is different. As NVMM has access latency close to
+DRAM, the processors should access them directly via load and store
+operations to fully exploit the NVMM performance.
+
+
+
+\textbf{Consistency} Modern processors may reorder write operations to improve
+performance. This is not an issue for DRAM because the cache consistency
+protocols provide all the processors with a consistent view of the memory.
+However, out-of-order writes to NVMM may leave the software (for example,
+file system) in an inconsistent state if a power failure occurs. Software
+for NVMM must take caution of the consistency issue. 
+
+To overcome the write reordering issue, several solutions are proposed:
+
+\begin{itemize}
+\item Use write-through caching to make sure for each operation
+data is flushed to the NVMM. This is a slow approach. 
+\item Flush the entire cache when encounter a memory barrier. This solution
+adds significant overhead to the performance.
+\item Track the dirty cache lines and flush them accordingly. This is much
+more efficient than flushing the entire cache, but may need software bookkeeping.
+\item Use hardware primitives. This is the most efficient approach, but requires
+hardware modifications.
+\end{itemize}
+
+Another inconsistency issue comes from the power failure during a single
+write operation. If the write operation is not atomic, the data is left
+in an inconsistent state. The common approaches to overcome the issue includes:
+
+\begin{itemize}
+\item Hardware atomic operations. This solution is simple but may require
+hardware modifications.
+\item Logging. Logging is a widely-used mechanism in file system and databases
+to ensure write atomicity. There are two kinds of logging: Undo logging, which
+saves the original value to the log and then update in place; Redo logging,
+which write the new data to the log and then copy to the target place.
+\item Copy-on-write operation. This is used in tree structure updates. Whenever
+update the node, a new node is created and the pointer in the parent node is
+updated atomically. This may result in cascade update up to the root.
+\end{itemize}
+%\textbf{Protection} 

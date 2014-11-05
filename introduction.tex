@@ -6,7 +6,8 @@ phase change memory (PCM), and
 memristor-based memories~\cite{moneta, monetad, quicksan,Onyx,
 pollisbetterthaninterrupt}
 promise to revolutionize IO performance and how
-systems manage and provide access to persistent state. Table~\ref{table:techtrend}
+systems manage and provide access to persistent state.
+Table~\ref{table:techtrend}
 shows the characteristics of these NVM technologies. The most aggressive
 proposals for integrating these technologies place them on the processor's
 memory bus alongside or replacing conventional DRAM, leading to non-volatile
@@ -30,23 +31,21 @@ operations.
 
 NVMMs invite a range of different interface designs, depending on the amount of
 NVMM available, the scale of the overall storage system, and the need (or lack
-thereof) to support legacy applications.  Researchers have proposed specialized
+thereof) to support legacy applications.  Researchers have proposed architecting
+NVMM as DRAM extension~\cite{pdram, memorage, duet}, specialized
 file systems for NVMMs~\cite{PMFS,BPFS}, non-volatile
-caches~\cite{RVM,riovista}, and new programming
+caches~\cite{RVM,riofilecache,riovista}, and new programming
 models~\cite{nvheaps,mnemosyne}.
 
 The remainder of the paper is organized as follows. Section
-~\ref{sec:background} introduces the background on the NVMM technologies
-and Section~\ref{sec:implications} shows the different approaches to utilize
-the NVMM in the system.
+~\ref{sec:background} introduces the background on the NVMM technologies.
 Section~\ref{sec:fs} discusses the NVMM file system design principles and
 challenges.
-In Section~\ref{sec:caching} we show the systems that use NVMM as a cache
-to accelerate storage access, and
-Section~\ref{sec:access} shows the accessing models to access NVMM
+Section~\ref{sec:access} shows the programming models to access NVMM
 efficiently.
-Section~\ref{sec:migration} introduces the design of systems with both DRAM and NVMM
-. Section~\ref{sec:related} introduces
+Section~\ref{sec:migration} introduces the design of systems with both DRAM and NVMM, and in Section~\ref{sec:caching} we show the systems that use NVMM as a
+ cache to accelerate storage access.
+Section~\ref{sec:related} introduces
 related work and Section~\ref{sec:conclude} summarizes our conclusion.
 
 
