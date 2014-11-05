@@ -2,87 +2,141 @@
 \label{sec:related}
 
 The emergence of fast, non-volatile memories and the prospect of
-widely-deployed NVMM has motivated many projects.
+widely-deployed NVMM has motivated many projects, not limited to the categories
+we have introduced. In this section we will talk about related researches
+on NVMM system software design.
 
-BankShot~\cite{BankShot} implements a fast SSD caching system
-and allows applications to access the SSD cache directly without going to
-kernel, and implements file system permission check in hardware to provide
-protection to files. It also supports dirty data tracking and LRU eviction
-in hardware.
+\subsection{System design} 
+\label{sec:systemdesign}
 
-\cite{Mogul} describes the necessary operating system support for
-NVM+DRAM hybrid main memory. The paper explores two possible NVM devices:
-flash memory and PCM device to reside on the memory bus. As flash memory
-is block-addressable with high write latency and low endurance, the paper
-proposed that only read-only and read-heavy pages should be stored in flash
-memory, and page is migrated between DRAM and flash memory. Also garbage
-collection and wear leveling is needed. For PCM devices, the system design
-is simpified as PCM is byte-addressable, garbage collection is no necessary
-and wear-leveling is simpler. The paper concludes that for a hybrid main
-memory system, OS should decide page migration issue to avoid endurance
-problems and high write latency of NVMM devices.
+~\cite{systemimplications} shows the implications for a NVMM-only
+system. It addresses several changes and challenges to current system design,
+such as paging and application running model. A NVMM-only system may benefit
+from the persistency of NVMM for fast recovery, but also meets the security
+and privacy issue which current system does not have. How to design a
+NVMM-only system is still in exploration.
 
-WSP~\cite{WSP} utilizes NVMM's persistent property, flushes processor registers
-and caches to NVMM on power failures to reduce the system recovery time.
-Some vendors have produced non-volatile main memory devices, they are
-either small capacity and byte-addressable~\cite{micron-nvdimm},
-or large capacity but block-addressable~\cite{smart-system}.
-With emerging non-volatile technologies, we can expect
-large capacity, byte-addressable NVMMs to appear.
+To overcome the CPU cache flush and write re-ordering issues, researchers
+have proposed various solution, such as explicit CPU cache flushing, logging
+and hardware primitive support. However, these solution are difficult
+to implement with legacy software and hardware, and they also add extra
+overheads. Some researches try to find a simple and low-overhead solution.
 
-Several systems have exposed non-volatile memories on the processor bus
-and provide novel interfaces to the data. Rio Vista~\cite{riovista} and
-recoverable virtual memory~\cite{RVM} are among the oldest systems in this
-class. Rio Vista exposed raw battery-backed DRAM to the application but made
-no provisions for file-based access. RVM provided a simple transactional
-interface to raw non-volatile memory.  More recently,
-several projects~\cite{nvheaps,
-mnemosyne,hpnvdata} produced frameworks for storing persistent objects
-in these memories.
-Like \Chell{}, these schemes expose persistent memory directly
-to the applications, but they also require programmers to rewrite applications
-to take advantages of them.
+\textbf{WrAP}~\cite{WrAP} proposes a system architecture
+ that provides persistence
+ordering, persistence atomicity and persistence protection guarantees. 
+WrAP consists of three components: a victim persistence cache (VPC); a log
+area of NVMM that keeps log of update operations and an asynchronous channel
+that used to propagate slow log records to NVMM. WrAP provides a lightweight
+firewall prevents arbitrary writes to NVMM and a non-intrusive interface
+for interaction between the cache system and NVMM.
 
-Some researchers integrate NVMM into existing systems with minimal impacts.
-PMBD~\cite{PMBD} leverages Linux kernel's block layer and presents NVMM as
-a block device to users. It protect the NVMM from stray writes by dynamically
-mapping NVMM pages into the kernel space only when needed, and uses non-temporal
-store (e.g., \texttt{movntq} and \texttt{clflush} in write-mode to provide write
-ordering.  Although PMBD provides protection and ordered persistence,
-implementing NVMM as a block device undermines the low-latency and
-high-bandwidth properties of NVMM, as the performance is restricted by the
-block layer, which is designed for slow storage like hard disks. \DAChell{}
-and \CChell{} works as a memory and allow applictions to access NVMM directly
-from user space to minimize the software overhead.
+Every write to NVMM in WrAP results in two update paths: an atomic update to
+the log area in NVMM, and a normal store instruction to the NVMM address. Both
+paths are performed simultaneously. VPC hold PCM entries that are evicted
+frpm the last-level cache and serves as the final backing store for evicted
+variables. VPC does not need to be persistent.
+Finally, the update to the home locations will be made
+independently by a COPY module that is part of the WrAP controller. 
+By propagate the write operation in two paths, WrAP not only makes the 
+write atomic, but also avoid the overhead of CPU cache flushing.
+Unfortunately WrAP does not provide evaluation of their system.
 
-A great deal of research focuses on the file system architect for NVMMs.
-SCMFS~\cite{scmfs} utilizes the OS VMM module to perform  block
-management and layout for files in large contiguous virtual address regions.
-BPFS~\cite{BPFS} is a file system designed for NVMM that provides
-tranactional guarantees. BPFS uses copy-on-write and eight-byte 
-atomic updates to provide metadata and data consistency. However, BPFS does
-not support \texttt{mmap()}, and it relies on a hardware approach (epochs)
-to support store durability and ordering, which requires hardware
-modifications.  PMFS~\cite{PMFS} is a light-weight
-file system that exploits persistent memory's byte-addressability, avoiding the
-overhead of accessing memory via the block layer and enabling applications to
-access persistent memory directly.  It also provides software-enforcebale guarantees of durability
-and ordering of writes while protecting persistent memory from stray writes.
-Unlike BPFS, PMFS utilizes pm\_wbarrier primitive to flush PM stores to a power
-fail-safe destination, and does not require hardware support.
+\textbf{SoftWrap}~\cite{softWrAP}
+ is the software implementation version of WrAP.
+Instead of applying a WrAP controller and VPC, SoftWrAP installs a library
+to transform applications to use the WrAP APIs to access the NVMM. WrAP
+uses VPC to hold PCM entries evicted from CPU cache, while SoftWrAP
+uses alias update, routes the cache entries to write to a different location
+without affecting the original data. SoftWrAP achieves the same persistent
+guarantee as WrAP without hardware modification.
 
-Both \DAChell{} and \CChell uses \texttt{mmap()} to accelerate NVMM access.
-Failure-atomic msync~\cite{atomicmsync} proposes a atomic commit of memory
-pages change for \texttt{mmap()ed} files, by flushing memory pages to persistent
-store first and then write back to the destination. For \DAChell{} and \CChell{}, as they are running on NVMM, there is no need to write back the data, and
-\texttt{msync()} is simely a CPU cache flush.
+\subsection{Recovery} 
+\label{sec:recovery}
 
-\begin{comment}
-We see two potential future improvements for \Chell{}. First, we hope to improve
-it by adding
-strong consistency and protection from malicious writes. Second, at present 
-\Chell{} cannot avoid
-\texttt{memcpy()} entirely, because POSIX APIs provide user buffers to fill with
-data. If we modify the POSIX interfaces that return cache pages to applications
-directly we can eliminate \texttt{memcpy}.
-\end{comment}
+Several early researches focus on how to recovery the system with NVMMs.
+\textbf{RVM}~\cite{RVM} is an efficient,
+ portable and easily used implementation of
+recoverable virtual memory for Unix enviorments. By eliminating the support
+for nesting, distribution and concurrency control, the implementation of 
+RVM becomes very simple and easy to use. RVM manages recoverable memory in
+segments, each with a file or a disk partition as backing store. Applications
+calls the interfaces provided by RVM to begin and commit transactions. RVM
+uses a undo/redo logging strategy to make the persistency guarantee. Old values
+are copied to undo log, while new values are written to the redo log. Applications call log control commands to force redo log to write into the disks
+and become persistent.
+
+\textbf{WSP}~\cite{WSP} stands for whole-system persistence.
+ It aims at systems where
+all memory is NVMM, and it transparently recovers an application's entire state,
+making a system failure appear as a suspend/resume event. WSP does not
+do anything about logging or explicit CPU cache flushing; instead, it does 
+\emph{flush-on-fail}, which flushes CPU registers and cache lines to NVMM
+on system failure, using a small residual energy window provided by system
+power supply. As WSP does not flush during normal operations, it eliminates
+the runtime overhead of flushing CPU cache lines on each update entirely, also
+it does not require any software modification such as NV-heaps~\cite{nvheaps}
+ and Mnemosyne~\cite{mnemosyne}.
+
+WSP consists of NVMM devices, a hardware power monitor, and software suspend/resume routines. When the WSP system fails, the hardware power monitor triggers
+an interrupt to the CPU core. All the CPU cores flush their cache lines to the 
+NVMM and then halts. On the recovery, resume routine does the inverse to recover
+the system to the consistent state. As WSP eliminates the runtime persistency
+operations, it shows good performance comparing to NV-heaps.
+
+A remaining issue of WSP is device recovery. As the device drivers are restored
+but the devices lost power and need to re-initialize, the state of software
+and hardware is not consistent. WSP proposes to clean up device state on
+the resume path, or virtualize the devices by using a VM hypervisor.
+
+
+\subsection{Block device} 
+\label{sec:bd}
+
+As NVMM is sitting on the system memory bus and expose the memory range
+to the applications, how to protect it from stray writes become a issue.
+Also, the system manages the NVMM needs to provide ordered persistence
+and be compatible with existing applications using POSIX I/O interfaces.
+All these requirements make the NVMM system software complex and difficult
+to implement.
+
+
+\textbf{PMBD}~\cite{PMBD}
+ is an attempt to leverage the existing modules that the 
+operating system provides and makes the system light-weight and easy to
+implement. Rather than the accessing models and file systems we have seen,
+PMBD treats NVMM as a block device sitting on the memory bus. The advantage
+is that it is easy to provide protection and order persistence for
+a block device than a memory device.
+
+PMBD proposes several solutions to protection and order persistence and
+compare the performance. For protection, one solution is to disable page
+table entry for write until needed; however, this incurs big penalty on
+TLB flush and performance is bad. Buffer the write requests and commit
+them as a batch helps to improve the performance for sequential writes,
+but not for random writes. The author finds out the best solution is 
+\emph{private mapping}: NVMM pages are mapped to virtual space only when
+required and unmapped after write finishes. Evaluation shows private
+mapping provides 90\% bandwidth of the optimal case. Private mapping
+addes overhead for each write request, but reduces page table size and
+TLB pollution.
+
+To guarantee write order, PMBD compares two solutions: use a non-temporal
+store (\texttt{movntq}) to bypass the CPU cache and \texttt{sfence} to
+flush the buffered data, or use \texttt{clflush} to flush CPU cache
+and \texttt{mfence} to ensure the data is written back. With micro-benchmark
+tests \texttt{movntq/sfence} generally works better than \texttt{clflush/mfence}
+solution.
+
+PMBD is targeting at a light-weight system which provides good 
+protection of NVMM. Thus, although PMBD provides several optimizations
+to improve the performance, the performance is not comparable to tmpfs
+and ramfs, which are file system for volatile memories. The fact that
+PMBD treats NVMM as a block device undermines the performance of NVMM,
+as Linux block layer is designed for slow storage devices and incurs
+significant software overhead for fast NVMM. Also, PMBD works with page
+cache, which is redundant: as NVMM is sitting on the memory bus, what is
+the benefit to copy the data to DRAM first? PMBD does not answer these
+questions, but it provides some insights on NVMM protection, which is
+not addressed by BPFS.
+

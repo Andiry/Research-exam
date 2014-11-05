@@ -238,6 +238,12 @@ for normal \texttt{mmap()} operations.
 Like \DAChell{}, \CChell{} divides the cached file into 2~MB chunks and
 \texttt{mmap()} with 2~MB granularity.
 
+Both \DAChell{} and \CChell uses \texttt{mmap()} to accelerate NVMM access.
+Failure-atomic msync~\cite{atomicmsync} proposes a atomic commit of memory
+pages change for \texttt{mmap()ed} files, by flushing memory pages to persistent
+store first and then write back to the destination. For \DAChell{} and \CChell{}, as they are running on NVMM, there is no need to write back the data, and
+\texttt{msync()} is simely a CPU cache flush.
+
 When the cache is full and \drv{}
 needs to evict cache pages, it needs to decide which cache pages to evict
 and whether the cache pages are dirty. As \lib{} accesses the NVMM directly

@@ -1,6 +1,13 @@
 \section{System design} 
 \label{sec:systemdesign}
 
+~\cite{systemimplications} shows the implications for a NVMM-only
+system. It addresses several changes and challenges to current system design,
+such as paging and application running model. A NVMM-only system may benefit
+from the persistency of NVMM for fast recovery, but also meets the security
+and privacy issue which current system does not have. How to design a
+NVMM-only system is still in exploration.
+
 To overcome the CPU cache flush and write re-ordering issues, researchers
 have proposed various solution, such as explicit CPU cache flushing, logging
 and hardware primitive support. However, these solution are difficult

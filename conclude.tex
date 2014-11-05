@@ -1,6 +1,24 @@
 \section{Conclusion}
 \label{sec:conclude}
 
+New NVMM technologies are emerging and they will appear on the processor
+memory bus with low-latency, high-bandwidth and byte-addressability. These
+properties provide both opportunities and challenges to system sofware
+programmers.
+
+In this paper we introduce promising non-volatile memory technologies such as
+PCM, STT-RAM and memristor, and show
+the NVMM software researches on four categories: file system, accessing model,
+hybrid system design and caching and acceleration. With NVMM sitting on the
+processor memory bus, it does not only allow applications to access directly
+to reduce overhead, but also bring design issues such as CPU caching impact
+and write reordering. How to conquer these problems without hurting the 
+performance NVMM provides is the main task for NVMM software designers.
+
+Lastly, we also discuss several different system designs to use NVMM, and try
+to explore the future usage of NVMM in computer systems.
+
+\ignore{
 NVMMs will require significant changes to systems architectures if applications
 are to exploit the performance they can provide.  We have described and
 evaluated \Chell{}, a system that uses NVMM to accelerate file access.
@@ -18,6 +36,7 @@ system's file buffer.
 
 Finally, we demonstrated a novel file IO interface that eliminates the need to
 copy data to and from userspace memory.  Since the advent of NVMM will make such copies the dominant cost in accessing file data, eliminating them is necessary if applications are going to fully levelage NVMMs.
+}
 
 \ignore{
 In this paper we describe two systems use emerging non-volatile maing memory

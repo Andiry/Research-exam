@@ -1,0 +1,88 @@
+\section{Related Work} 
+\label{sec:related}
+
+The emergence of fast, non-volatile memories and the prospect of
+widely-deployed NVMM has motivated many projects.
+
+BankShot~\cite{BankShot} implements a fast SSD caching system
+and allows applications to access the SSD cache directly without going to
+kernel, and implements file system permission check in hardware to provide
+protection to files. It also supports dirty data tracking and LRU eviction
+in hardware.
+
+\cite{Mogul} describes the necessary operating system support for
+NVM+DRAM hybrid main memory. The paper explores two possible NVM devices:
+flash memory and PCM device to reside on the memory bus. As flash memory
+is block-addressable with high write latency and low endurance, the paper
+proposed that only read-only and read-heavy pages should be stored in flash
+memory, and page is migrated between DRAM and flash memory. Also garbage
+collection and wear leveling is needed. For PCM devices, the system design
+is simpified as PCM is byte-addressable, garbage collection is no necessary
+and wear-leveling is simpler. The paper concludes that for a hybrid main
+memory system, OS should decide page migration issue to avoid endurance
+problems and high write latency of NVMM devices.
+
+WSP~\cite{WSP} utilizes NVMM's persistent property, flushes processor registers
+and caches to NVMM on power failures to reduce the system recovery time.
+Some vendors have produced non-volatile main memory devices, they are
+either small capacity and byte-addressable~\cite{micron-nvdimm},
+or large capacity but block-addressable~\cite{smart-system}.
+With emerging non-volatile technologies, we can expect
+large capacity, byte-addressable NVMMs to appear.
+
+Several systems have exposed non-volatile memories on the processor bus
+and provide novel interfaces to the data. Rio Vista~\cite{riovista} and
+recoverable virtual memory~\cite{RVM} are among the oldest systems in this
+class. Rio Vista exposed raw battery-backed DRAM to the application but made
+no provisions for file-based access. RVM provided a simple transactional
+interface to raw non-volatile memory.  More recently,
+several projects~\cite{nvheaps,
+mnemosyne,hpnvdata} produced frameworks for storing persistent objects
+in these memories.
+Like \Chell{}, these schemes expose persistent memory directly
+to the applications, but they also require programmers to rewrite applications
+to take advantages of them.
+
+Some researchers integrate NVMM into existing systems with minimal impacts.
+PMBD~\cite{PMBD} leverages Linux kernel's block layer and presents NVMM as
+a block device to users. It protect the NVMM from stray writes by dynamically
+mapping NVMM pages into the kernel space only when needed, and uses non-temporal
+store (e.g., \texttt{movntq} and \texttt{clflush} in write-mode to provide write
+ordering.  Although PMBD provides protection and ordered persistence,
+implementing NVMM as a block device undermines the low-latency and
+high-bandwidth properties of NVMM, as the performance is restricted by the
+block layer, which is designed for slow storage like hard disks. \DAChell{}
+and \CChell{} works as a memory and allow applictions to access NVMM directly
+from user space to minimize the software overhead.
+
+A great deal of research focuses on the file system architect for NVMMs.
+SCMFS~\cite{scmfs} utilizes the OS VMM module to perform  block
+management and layout for files in large contiguous virtual address regions.
+BPFS~\cite{BPFS} is a file system designed for NVMM that provides
+tranactional guarantees. BPFS uses copy-on-write and eight-byte 
+atomic updates to provide metadata and data consistency. However, BPFS does
+not support \texttt{mmap()}, and it relies on a hardware approach (epochs)
+to support store durability and ordering, which requires hardware
+modifications.  PMFS~\cite{PMFS} is a light-weight
+file system that exploits persistent memory's byte-addressability, avoiding the
+overhead of accessing memory via the block layer and enabling applications to
+access persistent memory directly.  It also provides software-enforcebale guarantees of durability
+and ordering of writes while protecting persistent memory from stray writes.
+Unlike BPFS, PMFS utilizes pm\_wbarrier primitive to flush PM stores to a power
+fail-safe destination, and does not require hardware support.
+
+Both \DAChell{} and \CChell uses \texttt{mmap()} to accelerate NVMM access.
+Failure-atomic msync~\cite{atomicmsync} proposes a atomic commit of memory
+pages change for \texttt{mmap()ed} files, by flushing memory pages to persistent
+store first and then write back to the destination. For \DAChell{} and \CChell{}, as they are running on NVMM, there is no need to write back the data, and
+\texttt{msync()} is simely a CPU cache flush.
+
+\begin{comment}
+We see two potential future improvements for \Chell{}. First, we hope to improve
+it by adding
+strong consistency and protection from malicious writes. Second, at present 
+\Chell{} cannot avoid
+\texttt{memcpy()} entirely, because POSIX APIs provide user buffers to fill with
+data. If we modify the POSIX interfaces that return cache pages to applications
+directly we can eliminate \texttt{memcpy}.
+\end{comment}
