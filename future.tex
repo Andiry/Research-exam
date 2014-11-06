@@ -29,12 +29,20 @@ Fourth, we need to think about POSIX APIs again. For years applications use
 \texttt{open()} to open a file, and call \texttt{read()} and \texttt{write()} to
 access the file data. As NVMM can be accessed via load/store operations, 
 POSIX read and write may adds unnecessary overheads to file access.
- As pointed out in Section~\ref{sec:posix}, current POSIX file 
+ As pointed out in Section~\ref{sec:noposix}, current POSIX file 
 interface may impace performance when accessing data on NVMM.
 
 Also, POSIX APIs trigger system calls, which results in mode switch overheads.
 This is not a problem when access slow storage devices, but for fast NVMM things
 are different.
+Researchers have realized the software overheads could impact
+fast storage and networking device performance,
+and they have proposed different approaches to make the common path as fast
+as possible.
+Arrakis~\cite{Arrakis} and IX~\cite{IX} argues that seperating data plane
+from control plane could improve application performance by accelerating
+data accesses. MonetaD~\cite{monetad} and BankShot~\cite{BankShot} access
+SSD devices directly from user space to eliminate the mode switch overhead.
 FlexSC~\cite{FlexSC} tries to reduce the system call overhead,
 and works like MegaPipe~\cite{MegaPipe} tries to move work to user space and
 batch system calls to reduce mode switches. Volos~\cite{system-scm} argues
