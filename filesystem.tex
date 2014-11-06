@@ -7,6 +7,11 @@ how to manage NVMM and work with existing space applications smoothly.
 As NVMM can be treated as storage device, file system is a straight forward
 way to manage the NVMM.
 
+DRAM file systems such as ramfs and tmpfs can also run on NVMM, but they
+do not support recovery, and file system consistency may be neutralized by
+CPU caching and write reordering, thus they are not eligible NVMM file systems.
+Most researches design NVMM file systems from scratch. 
+
 \textbf{eNVy} eNVy~\cite{eNVy} is a early exploration of NVMM storage system
 design. It proposes a system that attaches flash to the memory
 bus, and using SRAM to achieve high bandwidth and low latency. At that time
@@ -172,5 +177,4 @@ address space to gain better performance.
 
 \subsection{Conclusion} 
 \label{sec:fs-conclude}
-
 TBD
