@@ -26,10 +26,10 @@ Third, DRAM cache (page cache and buffer cache) does not exist anymore. If data
 is reside in NVMM, there is no point to cache it in DRAM. All the load/store
 operations should go to NVMM directly.
 Fourth, we need to think about POSIX APIs again. For years applications use
-\texttt{open()} to open a file, and call \texttt{read()} and \textt{write()} to
+\texttt{open()} to open a file, and call \texttt{read()} and \texttt{write()} to
 access the file data. As NVMM can be accessed via load/store operations, 
 POSIX read and write may adds unnecessary overheads to file access.
- As pointed out in Section~\sec{posix}, current POSIX file 
+ As pointed out in Section~\ref{sec:posix}, current POSIX file 
 interface may impace performance when accessing data on NVMM.
 
 Also, POSIX APIs trigger system calls, which results in mode switch overheads.
