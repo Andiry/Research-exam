@@ -30,6 +30,12 @@ eNVy: SSD uses DRAM as write buffers, deploy FTL layer to do the page remapping
 , and perform garbage collection in the background to provide available flash
 pages and wear leveling.
 
+\textbf{Conquest}~\cite{conquest} is a NVMM/Disk hybrid file system.
+With the observation that most acesses are to small files and most storage is
+comsumed by large files, Conquest puts all small files and metadata in NVMM,
+while disks only hold the data content of large files. With Conquest, the most
+frequest accesses to files are satisfied in NVMM and the overall performance is
+improved.
 
 \textbf{BPFS} BPFS~\cite{BPFS} is a good example to show how to design a NVMM
 file system, and demonstrates the challenges in the implementation.
