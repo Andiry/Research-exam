@@ -2,10 +2,44 @@
 \label{sec:future}
 
 NVMM brings us with fast, dense,
-non-volatile, and byte-addressable memory, and has the
-potential to replace DRAM in the near future. These properties may
-greatly change the current storage hierarchy and 
+non-volatile, and byte-addressable memory. With these properties NVMM may
+replace DRAM or slower storage in the future.
+This may greatly change the current DRAM/storage
+hierarchy and impact the system software design.
 
-TBD
+If NVMM replace DRAM entirely, all the programs will be executed on a
+persistence address space, and whole system persistency is available~\cite{WSP}.
+This may reduce system recovery time to seconds and programs can resume
+running form where they are interrupted. However, putting everything in
+NVMM also has risk. A malicious attack can break the application data, and if
+the operating system cannot detect the attack, applications may never run
+properly again, as writing to NVMM is persistent and cannot be fixed by a reboot. 
 
+On the other hand, if NVMM replace the slower storage devices, the DRAM/storage
+architecture need to be redesigned. First, is file system still necessary?
+disks and other storage devices do not provide any
+protection mechanism and rely on file system to protect the data, but NVMM
+can be protected by MMU hardware; Second, block layer and I/O scheduling
+will be eliminated as they are designed for disks,
+while NVMM is byte-addressable and supports random access.
+Third, DRAM cache (page cache and buffer cache) does not exist anymore. If data
+is reside in NVMM, there is no point to cache it in DRAM. All the load/store
+operations should go to NVMM directly.
+Fourth, we need to think about POSIX APIs again. For years applications use
+\texttt{open()} to open a file, and call \texttt{read()} and \textt{write()} to
+access the file data. As NVMM can be accessed via load/store operations, 
+POSIX read and write may adds unnecessary overheads to file access.
+ As pointed out in Section~\sec{posix}, current POSIX file 
+interface may impace performance when accessing data on NVMM.
+
+Also, POSIX APIs trigger system calls, which results in mode switch overheads.
+This is not a problem when access slow storage devices, but for fast NVMM things
+are different.
+FlexSC~\cite{FlexSC} tries to reduce the system call overhead,
+and works like MegaPipe~\cite{MegaPipe} tries to move work to user space and
+batch system calls to reduce mode switches. Volos~\cite{system-scm} argues
+NVMM file system should be implemented largely as a user space library, rather
+than as a kernel-level service. All the naming and indexing should be provided
+in user-mode, the kernel is responsible only for NVMM protection and permission
+management.
 
