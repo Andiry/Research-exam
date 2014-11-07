@@ -38,14 +38,29 @@ Another contribution of Rio is that it proposes several fault models of system
 failure to memory and tested the system with thousands of reboot. This makes
 it more reliable.
  
-\textbf{Rio Vista}~\cite{riovista} is a combination of RVM and Rio.
-It is an evolutionarywork of Rio, and relate closely to RVM design.
-Like RVM, Rio Vista is a
-user-level, recoverable-memory library, and it runs on Rio. Unlike RVM,
-which has undo log and redo log, Rio Vista just has one undo log. When
+\textbf{Rio Vista}~\cite{riovista} is an evolutionary work of Rio,
+Rio Vista is a
+user-level, recoverable-memory library, and it runs on Rio.
+
+Traditional recoverable memory system has to maintain two logs. With a write
+operation, the original value needs to be copy to a undo log to support user
+aborts. Then the updated data is written to a redo log on the disk. After
+the redo log is full, data is copied to the original place and redo log is
+truncated. These involves two logs and three memory copy operations.
+
+With the persistent file cache provided by Rio,
+Rio Vista just use one undo log to achieve the same recoverable memory system,
+and it eliminates the redo log
+and unnecessary memory copies. When
 application starts a transcation, Rio Vista copies the origial data to the 
 undo log, which is kept in NVMM provided by Rio, and then application can
 write new data in-place and discards the undo log by the end of the transaction.
+As both undo log and data are in the NVMM, Rio Vista eliminates the redo log and
+log truncation. During system recovery, Rio Vista simply rolls back the changes
+in the uncommitted transactions to a consistent state.
+With the simple and efficient implementation, Rio Vista
+achieves a overall speedup of 150-556\x{} for benchmarks based on TPC-B and
+TPC-C.
 
 Rio Vista is trying to be simple, handles only the basic transaction features
 of atomicity and persistency. Like Rio, it does not address the write ordering
