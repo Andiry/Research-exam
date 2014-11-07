@@ -7,17 +7,26 @@ accelerate the file access is a good usage of NVMM.
 
 \textbf{Rio}~\cite{riofilecache} uses battery-backed memory to build a
 operating system
-with better performance and able to recovery from crash. To prevent the file
-cache from corrupt during system fialure, Rio turns off the write-permission
+with better performance and able to recovery from crash. Rio stores regular
+files in the unified buffer cache on the NVMM, and recover the files
+during system recovery.
+To prevent the file
+cache from corrupt during system failure, Rio turns off the write-permission
 bits in the page table for all file cache pages, only enable it during page
 writing. Rio also disables the ability of the processor to bypass the TLB,
-enforce the protection for all the pages.
+enforce the protection for all the pages. With these mechanisms, Rio guarantees
+that the file cache will not be accidentally overwritten by the system during
+a crash.
 
 Rio uses the warm reboot mechanism to rebuild the system. When the system 
 recovers from failure, it read the file cache extents present in physical memory
-and update file system with the data. To figure the file cache contents,
+and update file system with the data. To figure out the file cache contents,
 Rio also needs to store the metadata for the file cache. Rio allocates a
 separate region of memory called registry to store the metadata information.
+This makes Rio looks like a NVMM file system.
+To minimize the software changes, Rio first dump the file cache to swap
+partition, and then use a user-level process to analyze the memory dump
+and restores the file cache.
 
 Rio improves the system performance by eliminating the sync and fsync system
 calls, which are expensive in the original system. However, as buffer cache
