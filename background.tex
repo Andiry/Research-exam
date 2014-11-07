@@ -13,7 +13,8 @@ for NVMM and challenges they face.
 \label{sec:hardware}
 
 \textbf{Phase Change Memory} is a promising non-volatile byte-addressable
-memory technology. PCM is built with Chalcogenide-based materials, which has
+memory technology~\cite{PCM_EfficientMainMemory, PCMHierarchy}.
+PCM is built with Chalcogenide-based materials, which has
 two states, crystalline state and amorphous state. By
 injecting current to heat the memory cell to a high temperature for a period
 of time, the material crystallize and the resistence reduce. To reset the cell,
@@ -38,7 +39,8 @@ read latency and 40ns for write latency, with 0.3mA power consumption
 per cell~\cite{sttram}. The disadvantage of STT-RAM is shrinking cell size is
 extremely difficult.
 
-\textbf{Memristor memory} is a resistive RAM device. Applying electric field
+\textbf{Memristor memory} is a resistive RAM device~\cite{memristor}.
+Applying electric field
 changes the resistence of the memristor device, and different resistence level
 can be read as 0 or 1. Recent research on memristor indicates that its
 performance could be comparable to DRAM, with write endurance up to $10^{10}$
@@ -69,8 +71,83 @@ large capacity, byte-addressable NVMMs to appear.
 	\caption{\figtitle{Properties of Non-volatile memory technologies}}
 	\label{table:techtrend}
 \end{table}
+\subsection{Challenges for NVMM software}
+\label{sec:challenge}
 
-\subsection{Software for non-volatile memory on memory bus}
+Although NVMM is sitting on the system memory bus and can be accessed
+via load and store operations like DRAM, its difference from DRAM
+makes the NVMM software design needs to consider several special
+characteristics:
+
+\textbf{Performance} Traditional storage devices are sitting on I/O bus
+(like SATA and USB) or high performance system bus such as PCIe. To access
+them, applications need to pay the software overhead of mode switch, VFS and
+block layer. For slow storage devices the software overhead is negligible,
+but with NVMM the story is different. As NVMM has access latency close to
+DRAM, the processors should access them directly via load and store
+operations to fully exploit the NVMM performance.
+
+\textbf{CPU caching hierarchy}
+~\cite{CPUcaching} show the impact of CPU caching on the NVMM performance
+and programming. Modern CPUs have store buffer to temporarily keep each store
+to hide the latency of cache, and WC buffer to batch the writes before
+flush to memory. Both store buffer and WC buffer are aiming to hide latency
+and improve memory performance, but they also introduce problems on the
+persistency of NVMM, and require programming changes on NVMM.
+
+CPU uses write-back mode by default. In this mode stores are kept in cache
+before writing to memory. To guarantee stores are committed to NVMM to achieve
+persistency, applications must explicitly flush the cache lines for data
+updates. This approach is not only error-prone~\cite{singlelock}
+but also incurs significant
+performance penalty. In contrast, write-through mode removes unnecessary
+cache line flushes and reduce the software complexity, with write operations
+cannot benefit from fast CPU cache.
+
+\textbf{Write reordering} Modern processors may reorder write operations to improve
+performance. This is not an issue for DRAM because the cache consistency
+protocols provide all the processors with a consistent view of the memory.
+However, out-of-order writes to NVMM may leave the software (for example,
+file system) in an inconsistent state if a power failure occurs. Software
+for NVMM must take caution of the consistency issue. 
+
+To overcome the CPU caching and write reordering issue,
+several solutions are proposed:
+
+\begin{itemize}
+\item Use write-through caching to make sure for each operation
+data is flushed to the NVMM. This is a slow approach. 
+\item Flush the entire cache when encounter a memory barrier. This solution
+adds significant overhead to the performance.
+\item Track the dirty cache lines and flush them accordingly. This is much
+more efficient than flushing the entire cache, but may need software bookkeeping.
+\item Use hardware primitives. This is the most efficient approach, but requires
+hardware modifications.
+\end{itemize}
+
+Another inconsistency issue comes from the power failure during a single
+write operation. If the write operation is not atomic, the data is left
+in an inconsistent state. The common approaches to overcome the issue includes:
+
+\begin{itemize}
+\item Hardware atomic operations. This solution is simple but may require
+hardware modifications.
+\item Logging. Logging is a widely-used mechanism in file system and databases
+to ensure write atomicity. There are two kinds of logging: Undo logging, which
+saves the original value to the log and then update in place; Redo logging,
+which write the new data to the log and then copy to the target place.
+\item Copy-on-write operation. This is used in tree structure updates. Whenever
+update the node, a new node is created and the pointer in the parent node is
+updated atomically. This may result in cascade update up to the root.
+\end{itemize}
+%\textbf{Protection}
+
+These challenges must be addressed in the NVMM system software design.
+Researchers try to overcome these issues without sacrificing the performance
+of NVMM, aiming at provide a fast, easy to use and robust system to users.
+
+
+\subsection{Software for NVMM}
 \label{sec:NVMM}
 
 When non-volatile memory emerges, there have been researches about how to
@@ -82,7 +159,7 @@ put them on the processor memory bus become the most reasonable solution
 to fully exploit the performance of non-volatile memory.
 
 Although using NVMM as system memory and access them like DRAM is simple,
-this approach does not utilie the persistence property of NVMM. Also, the
+this approach does not exploit the persistence property of NVMM. Also, the
 high write latency and limited endurance comparing to DRAM makes NVMM not
 suitable to replace DRAM direcly, and system software is necessary to
 manage the NVMM.
@@ -118,59 +195,5 @@ does.
 \end{itemize}  
 
 In this paper we introduce some major contributions of each categories
- and describe them in details in the following sections.
+and describe them in details in the following sections.
 
-\subsection{Challenges for NVMM software}
-\label{sec:challenge}
-
-Although NVMM is sitting on the system memory bus and can be accessed
-via load and store operations like DRAM, its difference from DRAM
-makes the NVMM software design needs to consider several special
-characteristics:
-
-\textbf{Performance} Traditional storage devices are sitting on I/O bus
-(like SATA and USB) or high performance system bus such as PCIe. To access
-them, applications need to pay the software overhead of mode switch, VFS and
-block layer. For slow storage devices the software overhead is negligible,
-but with NVMM the story is different. As NVMM has access latency close to
-DRAM, the processors should access them directly via load and store
-operations to fully exploit the NVMM performance.
-
-
-
-\textbf{Consistency} Modern processors may reorder write operations to improve
-performance. This is not an issue for DRAM because the cache consistency
-protocols provide all the processors with a consistent view of the memory.
-However, out-of-order writes to NVMM may leave the software (for example,
-file system) in an inconsistent state if a power failure occurs. Software
-for NVMM must take caution of the consistency issue. 
-
-To overcome the write reordering issue, several solutions are proposed:
-
-\begin{itemize}
-\item Use write-through caching to make sure for each operation
-data is flushed to the NVMM. This is a slow approach. 
-\item Flush the entire cache when encounter a memory barrier. This solution
-adds significant overhead to the performance.
-\item Track the dirty cache lines and flush them accordingly. This is much
-more efficient than flushing the entire cache, but may need software bookkeeping.
-\item Use hardware primitives. This is the most efficient approach, but requires
-hardware modifications.
-\end{itemize}
-
-Another inconsistency issue comes from the power failure during a single
-write operation. If the write operation is not atomic, the data is left
-in an inconsistent state. The common approaches to overcome the issue includes:
-
-\begin{itemize}
-\item Hardware atomic operations. This solution is simple but may require
-hardware modifications.
-\item Logging. Logging is a widely-used mechanism in file system and databases
-to ensure write atomicity. There are two kinds of logging: Undo logging, which
-saves the original value to the log and then update in place; Redo logging,
-which write the new data to the log and then copy to the target place.
-\item Copy-on-write operation. This is used in tree structure updates. Whenever
-update the node, a new node is created and the pointer in the parent node is
-updated atomically. This may result in cascade update up to the root.
-\end{itemize}
-%\textbf{Protection} 

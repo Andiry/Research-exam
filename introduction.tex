@@ -5,7 +5,7 @@ Emerging non-volatile memories such as spin-torque transfer RAM (STT-RAM),
 phase change memory (PCM), and
 memristor-based memories~\cite{moneta, monetad, quicksan,Onyx,
 pollisbetterthaninterrupt}
-promise to revolutionize IO performance and how
+promise to revolutionize I/O performance and how
 systems manage and provide access to persistent state.
 Table~\ref{table:techtrend}
 shows the characteristics of these NVM technologies. The most aggressive
@@ -16,11 +16,20 @@ PCMHierarchy,eNVy,WSP}. The close coupling of compute and
 non-volatility in NVMM systems will force system designers to rethink how
 software interacts with storage, if applications are going to reap the benefits of NVMM.
 
-As NVMM provides latency and bandwidth comparable to DRAM, new problems
+Traditional software stack to access storage device such as disks
+adds software overhead such as mode switch, block layer and I/O scheduling.
+As disk access time dominates the latency, software overhead is trivial.
+However, with low-latency NVMM, software overheads play an important role
+in the access latency~\cite{monetad,BankShot}. Traditional software
+stack is not suitable for fast NVMM and we need a new software accessing model.
+
+On the other hand, as NVMM provides latency and bandwidth comparable to DRAM,
+new problems
 appear if the processors directly access them as DRAM. One problem is 
 CPU cache hierarchy. Modern CPUs have several levels of write-back cache,
  and data store does not flush to memory explicitly. If system fails before
-data in cache flushed to NVMM, the data is lost after recovery. Another
+data in cache flushed to NVMM, the data is lost after
+recovery~\cite{CPUcaching}. Another
 problem is the write reordering, as modern CPU may reorder writes to the
 memory for performance, and use cache consistency protocols to maintain
 a consistent visibility of memory for the processors. However, for NVMM,
