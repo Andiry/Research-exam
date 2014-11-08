@@ -51,6 +51,17 @@ uses alias update, routes the cache entries to write to a different location
 without affecting the original data. SoftWrAP achieves the same persistent
 guarantee as WrAP without hardware modification.
 
+\textbf{Kiln}~\cite{Kiln} provides a persistent memory design
+ that adopts a non-volatile
+cache and a non-volatile main memory to enable atomic in-place updates without
+logging or copy-on-write. Kiln moves the transaction commitment to the NV
+cache layer, all the data are resided inside CPU cache (including last level
+NV cache) before committed. When commit a transaction, Kiln flushes all
+the dirty lines in volatile cache to NV cache, and then change the states of
+NV cache lines to committed. Committed NV cache lines are persistent and
+can be flushed to NVMM. Kiln has a similar programming interface as NV-Heaps
+and Mnemosyne, but the majority contribution is the NV cache layer.
+
 \subsection{Recovery} 
 \label{sec:recovery}
 
