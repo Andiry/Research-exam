@@ -196,7 +196,9 @@ or byte level.
 At this shift level, the mapping information would consume much more space.
 Third, Software wear leveling cannot be more efficient
 than a hardware solution. We conclude that NVMM wear leveling should be
-implemented in hardware.
+implemented in hardware. Start-Gap~\cite{startgap1} is a simple and effective
+wear leveling technique for PCM-based NVMM. It uses only two registers and
+makes NVMM robust to malicious attacks.
 
 \subsection{Rethink the POSIX File Interface}
 \label{sec:noposix}
