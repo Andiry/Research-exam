@@ -127,21 +127,15 @@ and hardware is not consistent. WSP proposes to clean up device state on
 the resume path, or virtualize the devices by using a VM hypervisor.
 
 
-\subsection{Block device} 
-\label{sec:bd}
+\subsection{Protection} 
+\label{sec:protection}
 
 As NVMM is sitting on the system memory bus and expose the memory range
 to the applications, how to protect it from stray writes become a issue.
-Also, the system manages the NVMM needs to provide ordered persistence
-and be compatible with existing applications using POSIX I/O interfaces.
-All these requirements make the NVMM system software complex and difficult
-to implement.
-
-
 \textbf{PMBD}~\cite{PMBD}
  is an attempt to leverage the existing modules that the 
 operating system provides and makes the system light-weight and easy to
-implement. Rather than the accessing models and file systems we have seen,
+implement. Rather than the systems we have seen,
 PMBD treats NVMM as a block device sitting on the memory bus. The advantage
 is that it is easy to provide protection and order persistence for
 a block device than a memory device.
@@ -158,24 +152,22 @@ mapping provides 90\% bandwidth of the optimal case. Private mapping
 addes overhead for each write request, but reduces page table size and
 TLB pollution.
 
+\ignore{
 To guarantee write order, PMBD compares two solutions: use a non-temporal
 store (\texttt{movntq}) to bypass the CPU cache and \texttt{sfence} to
 flush the buffered data, or use \texttt{clflush} to flush CPU cache
 and \texttt{mfence} to ensure the data is written back. With micro-benchmark
 tests \texttt{movntq/sfence} generally works better than \texttt{clflush/mfence}
 solution.
+}
 
-PMBD is targeting at a light-weight system which provides good 
-protection of NVMM. Thus, although PMBD provides several optimizations
-to improve the performance, the performance is not comparable to tmpfs
-and ramfs, which are file system for volatile memories. The fact that
-PMBD treats NVMM as a block device undermines the performance of NVMM,
-as Linux block layer is designed for slow storage devices and incurs
-significant software overhead for fast NVMM. Also, PMBD works with page
-cache, which is redundant: as NVMM is sitting on the memory bus, what is
-the benefit to copy the data to DRAM first? PMBD does not answer these
-questions, but it provides some insights on NVMM protection, which is
-not addressed by BPFS.
+PMBD provides protection of NVMM with the cost of performance.
+The fact that
+PMBD treats NVMM as a block device incurs significant overhead
+as Linux block layer is designed for slow storage devices.
+Also PMBD does not allow applications to access NVMM directly.
+We don't think PMBD is the right solution to utilize NVMM, but it provides
+some insights on NVMM protection, which is not addressed by system such as BPFS.
 
 \subsection{Wear leveling}
 \label{sec:wear}
@@ -198,7 +190,9 @@ Third, Software wear leveling cannot be more efficient
 than a hardware solution. We conclude that NVMM wear leveling should be
 implemented in hardware. Start-Gap~\cite{startgap1} is a simple and effective
 wear leveling technique for PCM-based NVMM. It uses only two registers and
-makes NVMM robust to malicious attacks.
+makes NVMM robust to malicious attacks. \cite{secrefresh} and \cite{freep}
+are another two hardware solutions to balance the writes to PCM and improve
+lifetime.
 
 \subsection{Rethink the POSIX File Interface}
 \label{sec:noposix}
