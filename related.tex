@@ -1,6 +1,32 @@
 \section{Related Work} 
 \label{sec:related}
 
+\begin{table}[hbtp]
+	\resizebox{\linewidth}{!}{
+	\footnotesize
+	\centering
+	\begin{tabular}{|l|c|c|c|c|c|}
+	\hline
+%	\multirow{4}{*}{}&PMFS &\DAChell{}\\\hline
+%	&\multicolumn{2}{c|}{(Ops per second)}\\\hline
+	System & In-place & Logging & COW & clflush & mfence\\\hline
+	\hline
+	BPFS & * & No & Yes & No & Yes  \\\hline
+	PMFS & Yes & Yes & No & Yes & Yes  \\\hline
+	Mnemosyne & * & Yes & Yes & Yes & Yes \\\hline
+	NV-heaps & No & Yes & No & No & Yes  \\\hline
+	CDDS & No & No & Yes & Yes & Yes  \\\hline
+	UBJ & Yes & Yes & Yes & Yes & Yes  \\\hline
+	eNVy & No & No & Yes & No & Yes  \\\hline
+	Kiln & Yes & No & No & No & No  \\\hline
+	\hline
+	Native & Yes & No & No & No & No  \\\hline
+	\end{tabular}}
+	\vspace*{1mm}
+	\caption{\figtitle{Comparinson of NVMM system software}}
+	\label{table:comparison}
+\end{table}
+
 The emergence of fast, non-volatile memories and the prospect of
 widely-deployed NVMM has motivated many projects, not limited to the categories
 we have introduced. In this section we will talk about related researches
@@ -157,7 +183,7 @@ As NVMM has a lower endurance than DRAM, frequent writes will wear out
 NVMM in a few years and makes it unusable. Without wear leveling, the lifetime
 of a PCM based NVMM is just 0.5 to 3 years. This is unacceptable in a real
 system. ~\cite{PCMHierarchy} introduces write line random shifting to uniform
-the writes. ~\cite{PCM_EfficientMainMemroy} tracks the redundant bit-writes to
+the writes. ~\cite{PCM_EfficientMainMemory} tracks the redundant bit-writes to
 eliminate the writes that do not change the value. It also uses byte-level row
 shifting to rotate the writes at fine-grained granularity, as well as segment
 swapping at coarse-grained granularity.
