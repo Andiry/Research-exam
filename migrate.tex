@@ -53,6 +53,28 @@ inside memory controller, RaPP achieves better performance than software
 solution, but with more sophisticated hardware design.
 }
 
+Qureshi et.al.~\cite{PCMHierarchy} proposes a PCM-based hybrid main memory
+system. To get the best capacity and latency trade-off, the system applies
+large capacity of PCM to hold most of the pages during program execution,
+and uses a DRAM buffer to absorb the writes. 
+
+The system tries to minimize writes to the NVMMM to improve both performance
+and endurence. Cold data is fetched from disks directly to the DRAM buffer
+without going to the NVMM; Only when the DRAM buffer is full, dirty page is 
+evicted to the NVMM. This is called \emph{lazy-write organization}. Another
+optimization is \emph{line-level writeback}. Instead of writing the whole dirty
+page to the NVMM, the system records dirty data by 256 bytes linesize
+granularity, with a dirty bit per line in the tag store of DRAM buffer.
+When evict a dirty page to NVMM, only the dirty lines are actually written to
+the NVMM. Both lazy-write and line-level writeback try to minimize the writes
+to the NVMM to extend the endurance.
+
+The system also supports fine-grained wear-leveling for NVMM. A random 4-bit 
+number is generated when a page is fetched from disk, and all reads and writes
+to the NVMM is shifted by the rotate number to make
+the writes uniform across all 16 lines in the page.
+This helps to boost the system endurance by 3\x{}.
+
 \textbf{Memorage}~\cite{memorage} argues that NVMM-based systems will have large
 capacity of NVMM that need to be managed as both memory and storage in
 an integrated manner to make the best performance and trade-offs. For exmaple,
