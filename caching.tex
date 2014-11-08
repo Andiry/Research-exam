@@ -51,6 +51,25 @@ Rio Vista is trying to be simple, handles only the basic transaction features
 of atomicity and persistency. Like Rio, it does not address the write ordering
 issue and CPU caching issue, which undermines its credability. 
 
+\textbf{UBJ}~\cite{UBJ} is a union of buffer cache and journaling system,
+which supports in-place commit. In UBJ, the buffer cache and journal area
+share the same space, i.e. every block can be a cache block, a log block
+or both at the same time. UBJ periodically commits data by changing the dirty
+blocks into frozen state. When a block is frozen, in-place update is not
+allowed; instead, updates are written to a copy at new location. After all
+the dirty blocks in the commit transaction become frozen, they transition
+into checkpoint state and sync to disk.
+
+When system crashed, UBJ performs recovery by invalidating dirty blocks and 
+frozen blocks, and redo the checkpoint blocks, as they are guaranteed to be
+consistent. 
+
+UBJ eliminates the logging and reduces the writes to the storage device,
+hence improve the performance. However it does not describe implementation
+details. As UBJ creates copies when updating frozen blocks, a block may
+have several up-to-date and out-of-date copies in the buffer cache, and
+how to track the data version is unclear.
+
 \textbf{Chell}~\cite{Chell} is the system we built that accelerate storage
 access with NVMM. Chell can be configured to work in two modes: \DAChell{}
 and \CChell{}. \DAChell{} accelerates access to files stored in file systems
