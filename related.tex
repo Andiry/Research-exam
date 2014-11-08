@@ -203,8 +203,13 @@ makes NVMM robust to malicious attacks.
 \subsection{Rethink the POSIX File Interface}
 \label{sec:noposix}
 
-Both \DAChell{} and \CChell{} transparently provide a POSIX-compatible
-interface, so no changes to the application are needed.  This means, however, that applications must use POSIX-style file access functions and some of these are a poor match for NVMM.
+NV-heaps and Mnemosync provide low overhead interface to access NVMM. However,
+they require application modifications.
+On the other hand, with the Both \DAChell{} and \CChell{} transparently
+ provide a POSIX-compatible
+interface, so no changes to the application are needed.  This means, however,
+ that applications must use POSIX-style file access functions and some of these
+ are a poor match for NVMM.
 In particular, the POSIX interface
 requires the programmer to specify the buffer that \texttt{read()} copies data to.
 POSIX places no constraints on the size
@@ -213,7 +218,8 @@ slow disks and even SSDs, the cost of this copy is small.
 
 \cfigure[Graphs/latency-break-quill.pdf,{\figtitle{Chell-Direct 4~kB read/write latency breakdown. Memory copy accounts for 76\% of total latency. Page table is populated on file open, so the page fault overhead is eliminated.}},fig:latency-break]
 
-But for \DAChell{} and \CChell{}, the relative cost is much larger.
+But for NVMM based system such as \DAChell{} and \CChell{}, the relative cost
+ is much larger.
 Figure~\ref{fig:latency-break} shows the latency breakdown of 4~kB read and
 write operations of \DAChell{} with page table populated and page fault overhead
 eliminated.  The memory copy accounts for 76\% for 4~kB
