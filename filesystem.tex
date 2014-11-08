@@ -24,11 +24,13 @@ bandwidth. To do the cleaning efficiently, eNVy divide flash pages into
 segments and lower the utilizations of hot segments to reduce the cleaning
 time.
 
+\ignore{
 eNVy is not using real byte-addressable NVMM devices, but its implementation
 shows insight for SSD designs. Current commercial SSD works mainly like
 eNVy: SSD uses DRAM as write buffers, deploy FTL layer to do the page remapping
 , and perform garbage collection in the background to provide available flash
 pages and wear leveling.
+}
 
 \textbf{Conquest}~\cite{conquest} is a NVMM/Disk hybrid file system.
 With the observation that most acesses are to small files and most storage is
@@ -142,7 +144,7 @@ performance potential of NVMM to user applications.
 
 The author analyzes several approaches to enforce consistency, and finds out
 using NVMM as a write-back cacheable memory and explicitly flushing modified
-data from CPU cache (\emph{clflush} works well. However, current \emph{clflush}
+data from CPU cache (\emph{clflush}) works well. However, current \emph{clflush}
 implementation is strongly ordered and incurs performance penalty. Instead,
 PMFS proposes a optimized \emph{clflush} implementation which weaker ordering
 and hence improve performance. To provide the write ordering PMFS proposes

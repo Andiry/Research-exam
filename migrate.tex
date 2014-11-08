@@ -24,6 +24,9 @@ frequently written pages, while leave the read-intensive pages in NVMM.
 system, 
 relies on a hardware memory controller to log the write counts to each page,
 while a software module swap pages between DRAM and NVMM and does wear-leveling.
+\textbf{RaPP}~\cite{RaPP} implements the page migration inside the memory
+controller
+to monitor access patterns and migrate pages between NVMM and DRAM. 
 Mogul. et al~\cite{Mogul} describes the necessary operating system support for
 NVM+DRAM hybrid main memory. The paper explores two possible NVM devices:
 flash memory and PCM device to reside on the memory bus. As flash memory
@@ -36,7 +39,7 @@ and wear-leveling is simpler. The paper concludes that for a hybrid main
 memory system, OS should decide page migration issue to avoid endurance
 problems and high write latency of NVMM devices.
 
-
+\ignore{
 \textbf{RaPP}~\cite{RaPP} implements the page migration inside the memory
 controller
 to monitor access patterns and migrate pages between NVMM and DRAM. Rapp
@@ -48,6 +51,7 @@ non-critical pages and rarely written pages in PCM and spread writes
 to PCM across many physical frames. By putting the page placement policy
 inside memory controller, RaPP achieves better performance than software
 solution, but with more sophisticated hardware design.
+}
 
 \textbf{Memorage}~\cite{memorage} argues that NVMM-based systems will have large
 capacity of NVMM that need to be managed as both memory and storage in

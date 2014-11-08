@@ -74,7 +74,9 @@ Figure~\ref{fig:dachell} shows the high-level architecture of
 PMFS~\cite{PMFS}) manages the NVMM space and allows users to create and manage
 files that reside in the NVMM.
 
-\DAChell{} is implemented as an user space library, \libd{}, that transparently interposes on file access system calls.
+\DAChell{} is implemented as an user space library, \libd{}, that transparently 
+link into application with LD\_PRELOAD and interposes on file access system
+calls.
 \DAChell{} exploits DAX \texttt{mmap()} to make common-case access to file data
 fast.  When an application opens a file, \DAChell{} intercedes, and
 \texttt{mmap()}s the file's contents into the application's address space.
@@ -101,6 +103,17 @@ would with normal accesses.  However, many performance-intensive applications
 already disable file modification and access time updates to improve
 performance.
 
+\DAChell{} divides file into 2MB chunks as \texttt{mmap()} unit. This
+reduces the number of \texttt{mmap()} operations, and perform well as 
+a prefetch mechanism for small sequential requests.  
+\DAChell{} issues \texttt{mmap()} with the MAP\_POPULATE flag set to force the
+kernel to
+populate the application's page table immediately and hence reduce page faults.
+With micro- and macro-benchmark, We found that \DAChell{} improves 4~kB access
+latency by up to 19\% relative to file access through a PMFS, and improves
+Berkeley-DB performance by 6\% over PMFS.
+
+\ignore{
 Below we discuss the POSIX compatibility and implementation details of
 \DAChell{}.
 
@@ -165,6 +178,7 @@ PMFS~\cite{PMFS} and efforts are underway to add it to other file sysetms~\cite{
 With micro- and macro-benchmark, We found that \DAChell{} improves 4~kB access
 latency by up to 19\% relative to file access through a PMFS, and improves
 Berkeley-DB performance by 6\% over PMFS.
+}
 
 \subsection{\CChell{}: Accelerating Legacy Storage with NVMM}
 \label{sec:overview}
@@ -176,7 +190,7 @@ operation called \CChell{}.  \CChell{} uses NVMM to provide a reliable,
 consistent, write-back cache of data that resides in an existing file system.
 \CChell{} provides fast access to the cached data using the same techniques
 that \DAChell{} uses but it accesses cached data rather than actual file data.
-This section and the next describe the differences between \CChell{}
+This section describes the differences between \CChell{}
 and \DAChell{}.
 
 Figure~\ref{fig:CChellstack} shows the system architecture of \CChell{}.
@@ -187,16 +201,10 @@ backing store device.
 
 The only difference in \libd{} and \lib{} is in
 how they detect and react to a miss.  \Libd{} detects a miss when it
-finds that its B-tree does not contain an entry for the file location the
-application is trying to access.  This occurs the first time the application
-accesses each chunk.  Its response is simple, issues an \texttt{mmap()} to map
-the chunk.
-
-\Lib{} can also experience a miss when an entry is missing from its B-tree.
-But a miss can also manifest itself as a segmentation fault, if the data was
-mapped into userspace but the kernel had to evict it to make room for other
-data.
-In both cases, \lib{} issues an \texttt{ioctl()} to \drv{} requesting that
+finds that the request region is not mapped, and it 
+issues an \texttt{mmap()} to map the chunk. When
+\Lib{} experiences a miss,
+it issues an \texttt{ioctl()} to \drv{} requesting that
 it load the data from the backing store (if needed), and then map the data into
 the application's address space.
 
@@ -225,6 +233,7 @@ devices in NVMM, provides a fast, POSIX-compliant interface to applications.}
 \label{fig:CChellstack}
 \end{figure}
 
+\ignore{
 By default \CChell{} requires all the applications to access the NVMM cache via
 \lib{}.  Otherwise, if one application accesses a cached file via \CChell{}, while another
 application accesses the same file on the backing store device via POSIX write,
@@ -232,7 +241,6 @@ application accesses the same file on the backing store device via POSIX write,
 inconsistent view about the file.  To prevent this inconsistency, \drv{}
 interposes at the block device driver for the backing store and rejects
 accesses that touch cached data but that are not from applications using \lib{}.
-
 
 The space allocation and management system in \drv{} is based on PMFS.  It
 allocates NVMM in 4~kB pages to minimize fragmentation and wasted space for
@@ -244,9 +252,14 @@ TLB performance, reduce the number of page faults, and shrink the page table.
 The cache page will be mapped directly to the application's
 address space and avoids the overhead of the page cache and the block layer
 for normal \texttt{mmap()} operations.
+}
 Like \DAChell{}, \CChell{} divides the cached file into 2~MB chunks and
 \texttt{mmap()} with 2~MB granularity.
+\CChell{} uses LRU to decide which cache page to evict when the cache is full,
+and undo logging to enure the cache metadata remains consistent in the event
+of a crash.
 
+\ignore{ 
 Both \DAChell{} and \CChell uses \texttt{mmap()} to accelerate NVMM access.
 Failure-atomic msync~\cite{atomicmsync} proposes a atomic commit of memory
 pages change for \texttt{mmap()ed} files, by flushing memory pages to persistent
@@ -291,6 +304,7 @@ identifies uncommitted transactions and applies the undo information in the log
 to restore the metadata.
 After all the uncommitted transactions have been undone, \CChell{} is in a
 consistent state.
+}
 
 Evaluation result shows \CChell{} can
 reduce 4~kB access latency by up to 50\% and improve Berkeley-DB performance
