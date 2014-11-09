@@ -56,3 +56,10 @@ than as a kernel-level service. All the naming and indexing should be provided
 in user-mode, the kernel is responsible only for NVMM protection and permission
 management.
 
+Currently NVMM researches are focused on single machine system. However,
+we believe NVMM can have its place on distributed systems.
+RAMCloud~\cite{RAMCloud} proposes a data center with all the data reside in DRAM, but it still needs to write the data back in disk in case of crash recovery.
+With NVMM, that is not necessary. Mojim~\cite{mojim} claims that the NVMM page
+replication can be fast and efficient among the nodes in a distributed system.
+We are expecting more researches on NVMM usage in distributed system.
+

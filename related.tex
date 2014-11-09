@@ -13,22 +13,29 @@
 	\hline
 	BPFS & * & No & Yes & No & Yes  \\\hline
 	PMFS & Yes & Yes & No & Yes & Yes  \\\hline
+	Rio Vista & No & Yes & No & No & No  \\\hline
 	Mnemosyne & * & Yes & Yes & Yes & Yes \\\hline
 	NV-heaps & No & Yes & No & No & Yes  \\\hline
 	CDDS & No & No & Yes & Yes & Yes  \\\hline
-	UBJ & Yes & Yes & Yes & Yes & Yes  \\\hline
+	UBJ & Yes & Yes & Yes & No & Yes  \\\hline
 	eNVy & No & No & Yes & No & Yes  \\\hline
-	Kiln & Yes & No & No & No & No  \\\hline
+%	Kiln & Yes & No & No & No & No  \\\hline
 	\hline
 	Native & Yes & No & No & No & No  \\\hline
 	\end{tabular}}
 	\vspace*{1mm}
-	\caption{\figtitle{Comparinson of NVMM system software}}
+	\caption{\figtitle{Comparison of NVMM system software. * means in-place updates are only performed for memory stores to a single variable or at the granularity of cache line size.}}
 	\label{table:comparison}
 \end{table}
 
-The emergence of fast, non-volatile memories and the prospect of
-widely-deployed NVMM has motivated many projects, not limited to the categories
+Table~\ref{table:comparison} lists the mechanisms adoption status of some
+systems we have introduced. Almost all the NVMM systems rely on logging or
+copy-on-write to provide atomicity, and clflush and/or mfence to guarantee
+consistency. (Rio Vista does not use either clflush or mfence, but we believe
+it is a omission.) NVMM software must sacrifice some performance to achieve
+atomicity and consistency.
+
+The emergence of NVMM has motivated many projects, not limited to the categories
 we have introduced. In this section we will talk about related researches
 on NVMM system software design.
 
