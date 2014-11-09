@@ -58,7 +58,7 @@ system. To get the best capacity and latency trade-off, the system applies
 large capacity of PCM to hold most of the pages during program execution,
 and uses a DRAM buffer to absorb the writes. 
 
-The system tries to minimize writes to the NVMMM to improve both performance
+The system tries to minimize writes to the NVMM to improve both performance
 and endurence. Cold data is fetched from disks directly to the DRAM buffer
 without going to the NVMM; Only when the DRAM buffer is full, dirty page is 
 evicted to the NVMM. This is called \emph{lazy-write organization}. Another
