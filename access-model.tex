@@ -78,32 +78,6 @@ declare persistent objects and modify their softwares.
 \mnem{} has some limitations. It does not support persistent region sharing
 between processes. Also it does not address the wearout issue of NVMM.
 
-\textbf{CDSMM}~\cite{CDSMM} also presents the memory management module design
- for NVMMs.
-Rather than performance, it focuses on security and protection: it introduces
-techniques for 1) robust wear-aware memory allocation, 2) preventing for 
-erroneous writes, and 3) consistency-perserving updates that are cache-efficient.
-
-As hardware wear-leveling has performance issues, CDSMM presents a
-software memory allocator that always allocate new blocks rather than reusing
-old freed blocks to average the writes to each block. To reduce metadata
-writes, CDSMM puts important information in DRAM and sync to NVMM only required.It also adds checksum to prevent stray writes from modifying metadata.
-
-To protect NVMM pages CDSMM uses system call \texttt{mprotect}, but performs
-it in a batch way so that to reduce mode switch overhead, kernel structure
-modifying overhead and TLB flushes. CDSMM also proposes adding counter to CPU
-cache line so that application can use command to track data is either in 
-CPU cache or persistent on NVMM, and resolves the persistency and write ordering
-issue. 
-
-The disadvantage of CDSMM is that it requires both software and hardware
-modifications, adds significant overhead to software programming. The paper
-shows a B+ tree example and in order to apply CDSMM design, it does not only 
-adds much more software efforts, but also change the definition of B+ tree:
-the values in a node is not in sorted order and it takes linear time to search
-value in a node. CDSMM has several interesting ideas about NVMM protection, but
-to integrate the design in applications is still difficult.
-
 \textbf{CDDS}~\cite{cdds} proposes a consistent and durable data structure for
  NVMM.
 Instead of logging, CDDS works like snapshot file systems such as

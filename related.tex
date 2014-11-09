@@ -1,7 +1,7 @@
 \section{Related Work} 
 \label{sec:related}
 
-\begin{table}[hbtp]
+\begin{table}
 	\resizebox{\linewidth}{!}{
 	\footnotesize
 	\centering
@@ -13,7 +13,7 @@
 	\hline
 	BPFS & * & No & Yes & No & Yes  \\\hline
 	PMFS & Yes & Yes & No & Yes & Yes  \\\hline
-	Rio Vista & No & Yes & No & No & No  \\\hline
+	Rio Vista & No & Yes & No & N/A & N/A  \\\hline
 	Mnemosyne & * & Yes & Yes & Yes & Yes \\\hline
 	NV-heaps & No & Yes & No & No & Yes  \\\hline
 	CDDS & No & No & Yes & Yes & Yes  \\\hline
@@ -31,8 +31,8 @@
 Table~\ref{table:comparison} lists the mechanisms adoption status of some
 systems we have introduced. Almost all the NVMM systems rely on logging or
 copy-on-write to provide atomicity, and clflush and/or mfence to guarantee
-consistency. (Rio Vista does not use either clflush or mfence, but we believe
-it is a omission.) NVMM software must sacrifice some performance to achieve
+consistency. (Rio Vista does not mention using clflush or mfence, but we believe
+it should.) NVMM software must sacrifice some performance to achieve
 atomicity and consistency.
 
 The emergence of NVMM has motivated many projects, not limited to the categories
@@ -175,6 +175,44 @@ as Linux block layer is designed for slow storage devices.
 Also PMBD does not allow applications to access NVMM directly.
 We don't think PMBD is the right solution to utilize NVMM, but it provides
 some insights on NVMM protection, which is not addressed by system such as BPFS.
+
+\ignore{
+\textbf{CDSMM}~\cite{CDSMM} also presents the memory management module design
+ for NVMMs.
+Rather than performance, it focuses on security and protection: it introduces
+techniques for 1) robust wear-aware memory allocation, 2) preventing for 
+erroneous writes, and 3) consistency-perserving updates that are cache-efficient.
+
+As hardware wear-leveling has performance issues, CDSMM presents a
+software memory allocator that always allocate new blocks rather than reusing
+old freed blocks to average the writes to each block. To reduce metadata
+writes, CDSMM puts important information in DRAM and sync to NVMM only required.It also adds checksum to prevent stray writes from modifying metadata.
+}
+
+\textbf{CDSMM}~\cite{CDSMM} presents the MMU design for NVMMs, focuses on
+security and protection. It protects NVMM pages with system call
+\texttt{mprotect}, but performs it in a batch way so that to reduce mode
+switch overhead, kernel structure modifying overhead and TLB flushes.
+CDSMM also does a software wear-leveling by always allocating new blocks
+rather than reusing old freed blocks to average the writes to each block.
+
+The problem of CDSMM is that it requires both software and hardware
+modifications, and adds significant overhead to software programming.
+
+\ignore{
+ To reduce metadata
+cache line so that application can use command to track data is either in 
+CPU cache or persistent on NVMM, and resolves the persistency and write ordering
+issue. 
+
+The disadvantage of CDSMM is that it requires both software and hardware
+modifications, adds significant overhead to software programming. The paper
+shows a B+ tree example and in order to apply CDSMM design, it does not only 
+adds much more software efforts, but also change the definition of B+ tree:
+the values in a node is not in sorted order and it takes linear time to search
+value in a node. CDSMM has several interesting ideas about NVMM protection, but
+to integrate the design in applications is still difficult.
+}
 
 \subsection{Wear leveling}
 \label{sec:wear}

@@ -178,7 +178,7 @@ In contrast, BPFS does not support \texttt{mmap}, and PMBD transfers
 data via page cache, significantly undermines the NVMM performance.
 PMFS also supports large page size to decrease the page table size and
 TLB entries. ~\cite{mmfs} is another implementation of NVMM file system
-whichi supports DAX interface. It integrates memory management with file system
+which supports DAX interface. It integrates memory management with file system
 to manage NVMM, allocate NVMM in pages and directly map to application
 address space to gain better performance.
 
