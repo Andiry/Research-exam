@@ -47,7 +47,12 @@ system. It addresses several changes and challenges to current system design,
 such as paging and application running model. A NVMM-only system may benefit
 from the persistency of NVMM for fast recovery, but also meets the security
 and privacy issue which current system does not have. How to design a
-NVMM-only system is still in exploration.
+NVMM-only system is still in exploration. \cite{onestack} examines the
+properties of high-performance networking software stacks such as efficient
+hardware access, operating system bypass and zero copy data movement,
+points out that the I/O stack for NVMM should leverage from the mature and
+stable networking stack, and proposes an unified I/O stack that deal with
+network, local NVMM and remote NVMM under a common framework.
 
 To overcome the CPU cache flush and write re-ordering issues, researchers
 have proposed various solution, such as explicit CPU cache flushing, logging
