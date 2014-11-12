@@ -17,11 +17,11 @@ non-volatility in NVMM systems will force system designers to rethink how
 software interacts with storage, if applications are going to reap the benefits of NVMM.
 
 Traditional software stack to access storage device such as disks
-adds software overhead such as mode switch, block layer and I/O scheduling.
-As disk access time dominates the latency, software overhead is trivial.
-However, with low-latency NVMM, software overheads play an important role
+adds software overhead of mode switch, block layer and I/O scheduling.
+As disk access time dominates the overall latency, software overhead is trivial.
+However, with fast NVMM, software overheads play an important role
 in the access latency~\cite{monetad,BankShot}. Traditional software
-stack is not suitable for fast NVMM and we need a new software accessing model.
+stack is not suitable for NVMM and we need a new software accessing model.
 
 On the other hand, as NVMM provides latency and bandwidth comparable to DRAM,
 new problems
@@ -38,13 +38,17 @@ for example, in file system if the metadata change is written to NVMM before
 the file data, the file may be corrupted if system fails during the two 
 operations. 
 
-NVMMs invite a range of different interface designs, depending on the amount of
+To exploit the performance and persistency of NVMM,
+a range of different interface designs have been proposed,
+depending on the amount of
 NVMM available, the scale of the overall storage system, and the need (or lack
 thereof) to support legacy applications.  Researchers have proposed architecting
 NVMM as DRAM extension~\cite{pdram, memorage, duet}, specialized
 file systems for NVMMs~\cite{PMFS,BPFS}, non-volatile
 caches~\cite{RVM,riofilecache,riovista}, and new programming
-models~\cite{nvheaps,mnemosyne}.
+models~\cite{nvheaps,mnemosyne}. We investigate the solutions in the paper, to
+understand the impact of NVMM on system software design, and the opportunities
+and challenges NVMM brings to system implementation.
 
 The remainder of the paper is organized as follows. Section
 ~\ref{sec:background} introduces the background on the NVMM technologies and software.
