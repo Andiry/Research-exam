@@ -20,7 +20,7 @@ injecting current to heat the memory cell to a high temperature for a period
 of time, the material will crystallize and the resistence reduces. 
 To reset the cell,
 apply a large enough current for a short period to melt down the
-material and it transition into amorphous state with higher resistence.
+material and it transitions into amorphous state with higher resistence.
  These two states can be read as "1" and "0". As transition into crystalline
 state requires longer current injection, PCM has slower writes comparing to
 reads.  
@@ -82,11 +82,14 @@ makes the NVMM software design needs to consider several special
 characteristics:
 
 \textbf{Performance} Traditional storage devices are sitting on I/O bus
-(like SATA and USB) or high performance system bus such as PCIe(NVMe). To access
+(like SATA and USB) or high performance system bus such as PCIe. To access
 them, applications need to pay the software overhead of mode switch, 
 file system and
 block layer. For slow storage devices the software overhead is negligible,
-but with NVMM the story is different. As NVMM has access latency close to
+but with NVMM things are different. Moneta-D~\cite{monetad} and
+BankShot~\cite{BankShot} point out that even for NVM device on PCIe bus,
+the software overhead plays an important part in the access latency.
+As NVMM has access latency close to
 DRAM, the processors should access them directly via load and store
 operations to fully exploit the NVMM performance.
 
@@ -128,9 +131,14 @@ more efficient than flushing the entire cache, but may need software bookkeeping
 hardware modifications.
 \end{itemize}
 
-Another inconsistency issue comes from the power failure during a single
-write operation. If the write operation is not atomic, the data is left
-in an inconsistent state. The common approaches to overcome the issue includes:
+\textbf{Atomicity}
+As applications often update data with size larger than the interface width
+of NVMM, a single update may be serviced as several write requests. Therefore,
+a power failure during the serial operations may leave the update partially
+completed and the data in an inconsistent state. This is called atomicity issue.
+To address the issue, each update operation should be performed in an atomic
+transaction way, i.e. "All or nothing".
+The common approaches to achieve atomicity includes:
 
 \begin{itemize}
 \item Hardware atomic operations. This solution is simple but may require
@@ -182,7 +190,7 @@ of the consistency issue.
  of exposing the NVMM to the applications, they are sitting in the kernel stack,
 and applications need to go to kernel to update metadata frequently, results in
 the mode switch overhead.
-Some papers are investigating fast and safe accessing models of
+Some works investigate fast and safe accessing models of
 NVMM, grant applications direct access to the NVMM from user space. 
 These solutions provide good performance but require software modifications.
 
