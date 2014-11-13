@@ -23,18 +23,37 @@ may be obsoleted or needs modficiation:
 Disks and other storage devices do not provide any
 protection mechanism and rely on file system to protect the data, but NVMM
 can be protected by MMU hardware.
+\item \textbf{Allocation granularity}
+Current operating systems allocate DRAM with 4KB pages by default,
+and most NVMM system resues the size for NVMM allocation. Superpage argues
+that large page size such as 2MB reduces TLB misses, but it also yields
+space waste and coarse-grained protection. We assume NVMM should be allocated
+by extents, which provides both flexibility and fine-grained control. However,
+this means the TLB based protection needs to be redesigned.
+\item \textbf{Decouple protection from allocation} DRAM is organized by 
+page table in the operating system. This means both the allocation and
+protection of DRAM is at page-level granularity. However, this not flexible
+enough to manage NVMM. If we store multiple files smaller than page size,
+page-level protection means they cannot reside in the same page and hence
+the space is wasted. A big file which spans multiple pages have a single
+access permission, and enforce the protection to each page is also a waste.
+Decouple the protection from allocation makes NVMM management much more
+ flexible.
 \item Block layer and I/O scheduling
 will be eliminated as they are designed for disks,
-while NVMM is byte-addressable and supports random access.
-\item DRAM cache (page cache and buffer cache) does not exist anymore. If data
+while NVMM is byte-addressable and supports random access. Also,
+DRAM cache (page cache and buffer cache) does not exist anymore. If data
 is reside in NVMM, there is no point to cache it in DRAM. All the load/store
 operations should go to NVMM directly.
-\item We need to think about POSIX APIs again. For years applications use
-\texttt{open()} to open a file, and call \texttt{read()} and \texttt{write()} to
-access the file data. As NVMM can be accessed via load/store operations, 
-POSIX read and write may adds unnecessary overheads to file access.
- As pointed out in Section~\ref{sec:noposix}, current POSIX file 
+\item \textbf{New APIs for NVMM access}.
+As pointed out in Section~\ref{sec:noposix}, current POSIX file 
 interface may impace performance when accessing data on NVMM.
+The works described in Section~\ref{sec:access} provide their own interface
+for applications to access NVMM efficiently. As there is no standard, each of
+them proposes different APIs and applications need to be modified accordingly.
+We assume there should be a new standard API for NVMM access that both
+applications and NVMM software can follow, and that will save lots of efforts
+in software implementation. 
 \end{itemize}
 
 Also, POSIX APIs trigger system calls, which results in mode switch overheads.

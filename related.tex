@@ -42,6 +42,8 @@ on NVMM system software design.
 \subsection{System design} 
 \label{sec:systemdesign}
 
+Some researches give a overview of NVMM system and proposes software
+design suggestions.
 ~\cite{systemimplications} shows the implications for a NVMM-only
 system. It addresses several changes and challenges to current system design,
 such as paging and application running model. A NVMM-only system may benefit
@@ -54,11 +56,17 @@ points out that the I/O stack for NVMM should leverage from the mature and
 stable networking stack, and proposes an unified I/O stack that deal with
 network, local NVMM and remote NVMM under a common framework.
 
-To overcome the CPU cache flush and write re-ordering issues, researchers
-have proposed various solution, such as explicit CPU cache flushing, logging
-and hardware primitive support. However, these solution are difficult
-to implement with legacy software and hardware, and they also add extra
-overheads. Some researches try to find a simple and low-overhead solution.
+
+\subsection{Hardware/Software co-design} 
+\label{sec:hwswdesign}
+
+We've introduced the major software works to design the NVMM system. Most
+of them rely on some hardware primitives assistance, such as BPFS and PMFS.
+However, they try to minimize the hardware modifications and resolves the
+atomicity and consistency problems with software solutions,
+such as explicit CPU cache flushing and logging.
+They still add extra overheads. Some researches try to leverage more hardware
+solutions and make the software simple and efficient.
 
 \textbf{WrAP}~\cite{WrAP} proposes a system architecture
  that provides persistence
@@ -87,7 +95,7 @@ to transform applications to use the WrAP APIs to access the NVMM. WrAP
 uses VPC to hold PCM entries evicted from CPU cache, while SoftWrAP
 uses alias update, routes the cache entries to write to a different location
 without affecting the original data. SoftWrAP achieves the same persistent
-guarantee as WrAP without hardware modification.
+guarantee as WrAP without hardware modification, but not as efficient as WrAP.
 
 \textbf{Kiln}~\cite{Kiln} provides a persistent memory design
  that adopts a non-volatile
@@ -201,8 +209,10 @@ switch overhead, kernel structure modifying overhead and TLB flushes.
 CDSMM also does a software wear-leveling by always allocating new blocks
 rather than reusing old freed blocks to average the writes to each block.
 
-The problem of CDSMM is that it requires both software and hardware
-modifications, and adds significant overhead to software programming.
+The problem of CDSMM is that it adds significant overhead to software
+programming.
+CDSMM has several interesting ideas about NVMM protection, but
+to integrate the design in applications is still difficult.
 
 \ignore{
  To reduce metadata
@@ -236,6 +246,8 @@ the mapping data. If the
 However, researches propose a smaller shift granularity such as line size
 or byte level.
 At this shift level, the mapping information would consume much more space.
+Also, each access to NVMM needs to check the mapping information, makes it
+a performance bottleneck.
 Third, Software wear leveling cannot be more efficient
 than a hardware solution. We conclude that NVMM wear leveling should be
 implemented in hardware. Start-Gap~\cite{startgap1} is a simple and effective
@@ -247,16 +259,14 @@ lifetime.
 \subsection{Rethink the POSIX File Interface}
 \label{sec:noposix}
 
-NV-heaps and Mnemosync provide low overhead interface to access NVMM. However,
-they require application modifications.
-On the other hand, with the Both \DAChell{} and \CChell{} transparently
- provide a POSIX-compatible
-interface, so no changes to the application are needed.  This means, however,
- that applications must use POSIX-style file access functions and some of these
- are a poor match for NVMM.
+Most applications access the storage devices via POSIX interfaces, which are
+designed to be general enough to apply for most cases, from file I/O
+to network I/O.
+This means, however, the POSIX-style file access functions are not optimized
+for specific devices, and some of these are a poor match for NVMM.
 In particular, the POSIX interface
-requires the programmer to specify the buffer that \texttt{read()} copies data to.
-POSIX places no constraints on the size
+requires the programmer to specify the buffer that \texttt{read()} copies data
+to. POSIX places no constraints on the size
 or alignment of the buffer, so a copy operation is usually unavoidable.  For
 slow disks and even SSDs, the cost of this copy is small.
 

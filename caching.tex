@@ -1,7 +1,7 @@
 \section{Caching and acceleration} 
 \label{sec:caching}
 
-As NVMM outperform traditional storage devices with low latency and high
+As NVMM outperforms traditional storage devices with low latency and high
 bandwidth, build a persistent cache for slower storage devices and
 accelerate the file access is a good usage of NVMM. 
 
@@ -19,10 +19,11 @@ that the file cache will not be accidentally overwritten by the system during
 a crash.
 
 Rio uses the warm reboot mechanism to rebuild the system. When the system 
-recovers from failure, it read the file cache extents present in physical memory
+recovers from failure, it reads the file cache extents present in physical
+memory
 and update file system with the data. To figure out the file cache contents,
 Rio also needs to store the metadata for the file cache. Rio allocates a
-separate region of memory called registry to store the metadata information.
+separate region of NVMM called registry to store the metadata information.
 This makes Rio looks like a NVMM file system.
 To minimize the software changes, Rio first dump the file cache to swap
 partition, and then use a user-level process to analyze the memory dump
@@ -52,7 +53,7 @@ With the persistent file cache provided by Rio,
 Rio Vista just use one undo log to achieve the same recoverable memory system,
 and it eliminates the redo log
 and unnecessary memory copies. When
-application starts a transcation, Rio Vista copies the origial data to the 
+application starts a transcation, Rio Vista copies the original data to the 
 undo log, which is kept in NVMM provided by Rio, and then application can
 write new data in-place and discards the undo log by the end of the transaction.
 As both undo log and data are in the NVMM, Rio Vista eliminates the redo log and
@@ -75,7 +76,7 @@ allowed; instead, updates are written to a copy at new location. After all
 the dirty blocks in the commit transaction become frozen, they transition
 into checkpoint state and sync to disk.
 
-When system crashed, UBJ performs recovery by invalidating dirty blocks and 
+When system crashes, UBJ performs recovery by invalidating dirty blocks and 
 frozen blocks, and redo the checkpoint blocks, as they are guaranteed to be
 consistent. 
 
@@ -289,9 +290,9 @@ for normal \texttt{mmap()} operations.
 }
 Like \DAChell{}, \CChell{} divides the cached file into 2~MB chunks and
 \texttt{mmap()} with 2~MB granularity.
-\CChell{} uses LRU to decide which cache page to evict when the cache is full,
-and undo logging to enure the cache metadata remains consistent in the event
-of a crash.
+\CChell{} uses LRU policy to decide which cache page to evict when the cache 
+is full, and undo logging to enure the cache metadata remains consistent in
+the event of a crash.
 
 \ignore{ 
 Both \DAChell{} and \CChell uses \texttt{mmap()} to accelerate NVMM access.
