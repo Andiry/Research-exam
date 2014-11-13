@@ -8,7 +8,8 @@ As NVMM can be treated as storage device, file system is a straight forward
 way to manage the NVMM.
 
 DRAM file systems such as ramfs and tmpfs can also run on NVMM, but they
-do not support recovery, and file system consistency may be neutralized by
+do not support recovery capability, and file system consistency may be 
+neutralized by
 CPU caching and write reordering, thus they are not eligible NVMM file systems.
 Most researches design NVMM file systems from scratch. 
 
@@ -58,8 +59,8 @@ to be contiguous in physical address.
 
 The author claims that running in virtual address helps to make the SCMFS
 implementation simple and improve the performance, but it also increases
-TLB misses. To address the issue of write reordering, SCMFS does not use the
-hardware primitives proposed by BPFS, instead it combines the Linux kernel
+TLB misses. To address the issue of write reordering, SCMFS combines the
+ Linux kernel
 \texttt{mfence} and \texttt{clflush} operations to flush the CPU cache in
 range and sequence the write operations. It may not be as fast as hardware
 primitives, but the performance is acceptable for common workloads.
@@ -75,13 +76,13 @@ which means the number of files it support is fixed, and it does not scale
 well with NVMM size.
 }
 
-An evolution of SCMFS~\cite{superpage} further improves SCMFS performance
-by allocating larger pages and reducing TLB misses. Superpage~\cite{superpage}
+An evolution of SCMFS, \textbf{Superpage}~\cite{superpage} further improves
+SCMFS performance by allocating larger pages and reducing TLB misses. Superpage
 allocates normal 4KB pages for small files and file 
 metadata while allocating 2MB superpages for larger files, and improve overall
 performance with less TLB misses.
 
-\textbf{BPFS} BPFS~\cite{BPFS} is a good example to show how to design a NVMM
+\textbf{BPFS}~\cite{BPFS} is a good example to show how to design a NVMM
 file system, and demonstrates the challenges in the implementation.
 BPFS guarantees that
 each file system operation is performed atomically and in order.
@@ -140,7 +141,7 @@ With hardware support, BPFS implements a transactional file system for NVMM
 and gains better performance than traditional file systems.
 
 
-\textbf{PMFS} PMFS~\cite{PMFS} is another NVMM file system. It is aiming to
+\textbf{PMFS}~\cite{PMFS} is another NVMM file system. It is aiming to
 provide a
 light-weight POSIX file system that exploits NVMM's byte-addressability to
 avoid overheads of block layer and enable direct NVMM access by application.
@@ -152,7 +153,8 @@ The author analyzes several approaches to enforce consistency, and finds out
 using NVMM as a write-back cacheable memory and explicitly flushing modified
 data from CPU cache (\emph{clflush}) works well. However, current \emph{clflush}
 implementation is strongly ordered and incurs performance penalty. Instead,
-PMFS proposes a optimized \emph{clflush} implementation which weaker ordering
+PMFS proposes a optimized \emph{clflush} implementation which has  weaker
+ ordering
 and hence improve performance. To provide the write ordering PMFS proposes
 a hardware primitive, \emph{pm\_wbarrier} to guarantee durability of NVMM stores
 already flushed from CPU caches.
@@ -178,8 +180,7 @@ PMFS uses the Direct Access (DAX)~\cite{ext4dax} interface to support
 memory-mapped
 IO operations. With DAX support the NVMM pages are directly mapped into
 application's address space and bypass the page cache and block layer.
-In contrast, BPFS does not support \texttt{mmap}, and PMBD transfers
-data via page cache, significantly undermines the NVMM performance.
+In contrast, BPFS does not support \texttt{mmap}.
 PMFS also supports large page size to decrease the page table size and
 TLB entries. ~\cite{mmfs} is another implementation of NVMM file system
 which supports DAX interface. It integrates memory management with file system
@@ -191,3 +192,35 @@ address space to gain better performance.
 \label{sec:fs-conclude}
 TBD
 }
+
+\textbf{Aerie}~\cite{Aerie} tries to reduce the software overhead to access NVMM
+by redesigning the file system interfaces. Aerie exposes the file system
+data stored in NVMM directly to user-mode programs. Applications link to
+a user space library that provides local access to data and a OS kernel
+module provides coarse-grained allocation and protection. Applications can
+modify file data directly while contact the file system service to update
+metadata.
+
+Aerie consists of three components: an untrusted user mode library (libFS),
+a trusted file system service (TFS), and a kernel module NVMM manager. libFS
+handles data access, TFS provides service for metadata updates and concurrency
+control among processes, and NVMM manager provides storage allocation mechanism.
+libFS uses RPC to communicate with TFS, and TFS works as lock manager to 
+assign locks to applications using libFS, and it can revoke locks if needed.
+As TFS resides in the user space, most metadata updates do not go to the kernel
+and eliminate most mode switch overheads.
+
+The protection is provided by both NVMM manager and TFS, which divide the NVMM
+into extents, embedding them with permission information, and grant applications
+to the extents accordingly. To reduce RPC communication overhead, Aerie
+uses a batched and delayed metadata update mechanism, only when updates need to
+be visible to other clients. Another optimization Aerie does is to using
+a in-memory cache of path names to speed up name resolution.
+
+Aerie designs a file system, PXFS wich complies with POSIX semantics.
+To further show the impact of POSIX interfaces on performance, they also design a flat
+key-value store storage system (FlatFS), which applications access file
+through a simple put/get/erase interface. FlatFS is simpler, avoiding the
+overhead of name resolution and accelerates file sharing. The evalution shows FlatFS
+outperforms PXFS by up to 109\%, leading us to rethink the file system interface design.
+

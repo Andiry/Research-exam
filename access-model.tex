@@ -6,8 +6,13 @@ to be re-considered. Accessing non-volatile memory addresses several
 challenges: how to create and manage non-volatile memory, how to ensure
 consistency during system failures, and how to avoid common programming
 bugs, such as dangling pointers, multiple free()s, and locking errors.
+
+To facilitate application usage, researches manage NVMM as heaps~\cite{nvheaps},
+trees~\cite{cdds} and key-value stores~\cite{echo}, provide users with a fast,
+ persistent and easy-to-use interface to NVMM.
+  
 \textbf{Echo}~\cite{echo} implements a lightweight,
-persistent key value store system on NVMM, with transaction and multi-version
+persistent key-value store system on NVMM, with transaction and multi-version
 support. Echo stores the data in NVMM,
 while uses DRAM as a thin layer to offset the performance and wear-out
  weakness of NVMM. 
@@ -31,13 +36,14 @@ of committed values of the key. With version table it is easy to track
 the history and roll back to old versions. Unfortunately Echo does not
 resolve the conflicts, aborts and rollbacks support, which is essential
 for the system.
-}
 
 \textbf{\nvh{}}~\cite{nvheaps} and \textbf{\mnem{}}~\cite{mnemosyne}
 try to address these issues
 and propose solutions to the non-volatile memory accessing models.
+}
 
-\nvh{} creates a lightweight system that exposes the performance of the
+\textbf{\nvh{}}~\cite{nvheaps}
+creates a lightweight system that exposes the performance of the
 non-volatile memories and also ensures safety in the presence of
 application and system failures by avoiding common programming errors.
 It provides safe access to persistent objects with pointer safety and
@@ -75,7 +81,8 @@ address space. Application must explicitly declare persistent objects in
 programming but \nvh{} exerts to export simple interface for programmer
 and hide the details.
 
-\mnem{} is also addressing the management and persistency issue
+\textbf{\mnem{}}~\cite{mnemosyne}
+ also addresses the management and persistency issue
 of system failure for NVMM systems. \mnem{} provides three key services
 that simplify the usage of NVMM. First, it provides \emph{persistent
 memory regions}, which can be created automatically to store persistent 
@@ -128,35 +135,6 @@ make sure the tree is indentical to the most consistent version.
 CDDS shows the version-based design of the data structure on persistent
 memory. However, the implementation is complicated and specific. We still
 need to find out a more generic way to access the NVMM.
-
-\textbf{Aerie}~\cite{Aerie} tries to reduce the software overhead to access NVMM
-by redesigning the file system interfaces. Aerie exposes the file system
-data stored in NVMM directly to user-mode programs. Applications link to
-a user space library that provides local access to data and a OS kernel
-module provides coarse-grained allocation and protection. Applications can
-modify file data directly while contact the file system service to update
-metadata.
-
-Aerie consistos of three components: an untrusted user mode library (libFS),
-a trusted file system service (TFS), and a kernel module NVMM manager. libFS
-handles data access, TFS provides service for metadata updates and concurrency
-control among processes, and NVMM manager provides storage allocation mechanism.
-libFS uses RPC to communicate with TFS, and TFS works as lock manager to 
-assign locks to applications using libFS, and it can revoke locks if needed.
-
-The protection is provided by both NVMM manager and TFS, which divide the NVMM
-into extents, embedding them with permission information, and grant applications
-to the extents accordingly. To reduce RPC communication overhead, Aerie
-uses a batched and delayed metadata update mechanism, only when updates need to
-be visible to other clients. Another optimization Aerie does is to using
-a in-memory cache of path names to speed up name resolution.
-
-Aerie designs a file system, PXFS wich complies with POSIX semantics.
-To further show the impact of POSIX interfaces on performance, they also design a flat
-key-value store storage system (FlatFS), which applications access file
-through a simple put/get/erase interface. FlatFS is simpler, avoiding the
-overhead of name resolution and accelerates file sharing. The evalution shows FlatFS
-outperforms PXFS by up to 109\%, leading us to rethink the file system interface design.
 
 \ignore{
 To ensure system persistency during system failure, all the NVMM systems
