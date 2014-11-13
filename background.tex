@@ -17,14 +17,15 @@ memory technology~\cite{PCM_EfficientMainMemory, PCMHierarchy}.
 PCM is built with Chalcogenide-based materials, which has
 two states, crystalline state and amorphous state. By
 injecting current to heat the memory cell to a high temperature for a period
-of time, the material crystallize and the resistence reduce. To reset the cell,
+of time, the material will crystallize and the resistence reduces. 
+To reset the cell,
 apply a large enough current for a short period to melt down the
 material and it transition into amorphous state with higher resistence.
  These two states can be read as "1" and "0". As transition into crystalline
 state requires longer current injection, PCM has slower writes comparing to
 reads.  
 As heating causes contraction of the cell, PCM has limited write endurance
-up to $10^8$ cycles.
+up to $10^8 - 10^9$ cycles.
  
 \textbf{Spin-Torque Transfer RAM} STT-RAM uses magnetic properties of 
 certain materials and electric charges to enable different persistent states 
@@ -32,7 +33,7 @@ in memory cells. Each cell of STT-RAM has two ferromagnetic plates, with
 one holds a particular polarity permanently, while the other can change the
 polarity. If the two plates have the same polarity, the cell stores "1",
 otherwise it stores "0". By applying a current STT-RAM can change the polarity
-of the plate with soin-transfer torque.
+of the plate with spin-transfer torque.
 STT-RAM promises potential of unlimited write cycles, and
 current prototype using tunneling magnetorresistence showed 32ns for
 read latency and 40ns for write latency, with 0.3mA power consumption
@@ -81,8 +82,9 @@ makes the NVMM software design needs to consider several special
 characteristics:
 
 \textbf{Performance} Traditional storage devices are sitting on I/O bus
-(like SATA and USB) or high performance system bus such as PCIe. To access
-them, applications need to pay the software overhead of mode switch, VFS and
+(like SATA and USB) or high performance system bus such as PCIe(NVMe). To access
+them, applications need to pay the software overhead of mode switch, 
+file system and
 block layer. For slow storage devices the software overhead is negligible,
 but with NVMM the story is different. As NVMM has access latency close to
 DRAM, the processors should access them directly via load and store
@@ -94,7 +96,7 @@ and programming. Modern CPUs have store buffer to temporarily keep each store
 to hide the latency of cache, and WC buffer to batch the writes before
 flush to memory. Both store buffer and WC buffer are aiming to hide latency
 and improve memory performance, but they also introduce problems on the
-persistency of NVMM, and require programming changes on NVMM.
+persistency of NVMM, and require programming changes.
 
 CPU uses write-back mode by default. In this mode stores are kept in cache
 before writing to memory. To guarantee stores are committed to NVMM to achieve
@@ -167,34 +169,36 @@ manage the NVMM.
 
 Numerous researches propose different system software designs to
 manage the NVMM. Typical solution can be divided into the following
-four major categories:
+four categories:
 
 \begin{itemize}
-\item \textbf{File system} With the persistence property NVMM is suitable for
+\item \textbf{File system} Persistent  NVMM is suitable for
 user data storage, and manage it with a file system to provide applications
 fast access is a good way to utilize NVMM. NVMM file system is compatible
 with POSIX API, does not require software modification, but need to take care
 of the consistency issue.
 
-\item \textbf{Programming model} Although NVMM file system is capable
- of exposing
-the NVMM to the applications, the mode switch and VFS layer still adds
-overhead. Some papers are investigating fast and safe accessing models of
-NVMM, grant applications direct access to the NVMM. These solutions have
-good performance but require software modifications.
+\item \textbf{Programming model} Although NVMM file systems are capable
+ of exposing the NVMM to the applications, they are sitting in the kernel stack,
+and applications need to go to kernel to update metadata frequently, results in
+the mode switch overhead.
+Some papers are investigating fast and safe accessing models of
+NVMM, grant applications direct access to the NVMM from user space. 
+These solutions provide good performance but require software modifications.
 
-\item \textbf{DRAM extension} With the low power comsumption and high density,
+\item \textbf{DRAM extension} With the low power consumption and high density,
 NVMM is a good extension to DRAM to increase the system memory size. These
-researches focus on how to migrate memory pages between DRAM and NVMM.
+researches focus on how to utilize NVMM as DRAM extension and efficiently
+migrate memory pages between DRAM and NVMM.
 
 \item \textbf{Caching and acceleration} With low-latency and high-bandwidth,
 NVMM is able to work as a consistent cache for slower storage devices. As
 DRAM is largely used as page cache today, using NVMM as cache has additional
-benefits that it is persistent and does not to sync to disk as page cache
+benefits that it is persistent and does not need to sync to disk as page cache
 does.
 
 \end{itemize}  
 
-In this paper we introduce some major contributions of each categories
+In this paper we introduce some major contributions of each category
 and describe them in details in the following sections.
 
