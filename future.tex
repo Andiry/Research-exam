@@ -59,9 +59,6 @@ applications and NVMM software can follow, and that will save lots of efforts
 in software implementation. 
 \end{itemize}
 
-Also, POSIX APIs trigger system calls, which results in mode switch overheads.
-This is not a problem when access slow storage devices, but for fast NVMM things
-are different.
 Researchers have realized the software overheads could impact
 fast storage and networking device performance,
 and they have proposed different approaches to make the common path as fast
