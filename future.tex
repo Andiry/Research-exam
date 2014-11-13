@@ -19,10 +19,13 @@ On the other hand, if NVMM replace the slower storage devices, the DRAM/storage
 architecture need to be redesigned. Several common operating system features
 may be obsoleted or needs modficiation:
 \begin{itemize}
-\item Is file system still necessary?
+\item \textbf{Is file system still necessary?}
 Disks and other storage devices do not provide any
 protection mechanism and rely on file system to protect the data, but NVMM
-can be protected by MMU hardware.
+can be protected by MMU hardware. A file system resides in the kernel and
+talks to the virtual file system layer, which adds too much overhead to access
+NVMM, and frequent metadata change also undermines performance. We argue that
+traditional kernel file system is not suitable for NVMM. 
 \item \textbf{Allocation granularity}
 Current operating systems allocate DRAM with 4KB pages by default,
 and most NVMM system resues the size for NVMM allocation. Superpage argues
@@ -39,12 +42,12 @@ the space is wasted. A big file which spans multiple pages have a single
 access permission, and enforce the protection to each page is also a waste.
 Decouple the protection from allocation makes NVMM management much more
  flexible.
-\item Block layer and I/O scheduling
-will be eliminated as they are designed for disks,
-while NVMM is byte-addressable and supports random access. Also,
-DRAM cache (page cache and buffer cache) does not exist anymore. If data
-is reside in NVMM, there is no point to cache it in DRAM. All the load/store
-operations should go to NVMM directly.
+\item \textbf{Impact to current memory system}
+With NVMM, DRAM file cache does not exist anymore. With NVMM as file cache,
+data is persistent and does not need to sync to disk periodically, eliminates
+the expensive sync calls.
+Also, operating system does not swap out pages to disk when memory is low;
+Instead it swaps DRAM pages to NVMM, or it can borrow NVMM pages directly.
 \item \textbf{New APIs for NVMM access}.
 As pointed out in Section~\ref{sec:noposix}, current POSIX file 
 interface may impace performance when accessing data on NVMM.
