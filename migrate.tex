@@ -9,15 +9,13 @@ Thus, how to utilize NVMM's persistency property while reduce the writes to
 NVMM to hide the write latency and extend endurance becomes an interesting
 topic and several researches contributes to this area.
 
-In the hybrid system installed with both DRAM and NVMM, how to allocate
-pages to exploit the performance of these two memories is a open question.
-\cite{pcmalloc} allocate heap and stack segments with DRAM pages, and allocate
-NVMM pages to other segments, because heap and stack segments are updated
-frequently, while text segment is read only, and bss/data segments are
-updated infrequently. These allocation mechanism allocates write-intensive
-pages in DRAM and reduce the writes to NVMM. \textbf{PCM3D}~\cite{pcm3d}
-combines the DRAM
-and NVMM ares in a large flat memory region and migrate write-intensive pages
+The most common idea is to direct write-intensive pages to DRAM and read-only
+or read-intensive pages to NVMM.
+\cite{pcmalloc} allocate heap and stack segments with DRAM pages which are
+updated frequently, and allocate NVMM pages to text/bss/data segments as
+they are updated infrequently.
+\textbf{PCM3D}~\cite{pcm3d} combines the DRAM
+and NVMM in a large flat memory region and migrate write-intensive pages
 to DRAM. The migration is performed in operating system and target the
 frequently written pages, while leave the read-intensive pages in NVMM.
 \textbf{PDRAM}~\cite{pdram} introduces a hybrid PRAM and DRAM main memory
@@ -25,16 +23,15 @@ system,
 relies on a hardware memory controller to log the write counts to each page,
 while a software module swap pages between DRAM and NVMM and does wear-leveling.
 \textbf{RaPP}~\cite{RaPP} implements the page migration inside the memory
-controller
-to monitor access patterns and migrate pages between NVMM and DRAM. 
+controller to monitor access patterns and migrate pages between NVMM and DRAM. 
 Mogul. et al~\cite{Mogul} describes the necessary operating system support for
 NVM+DRAM hybrid main memory. The paper explores two possible NVM devices:
 flash memory and PCM device to reside on the memory bus. As flash memory
 is block-addressable with high write latency and low endurance, the paper
 proposed that only read-only and read-heavy pages should be stored in flash
-memory, and page is migrated between DRAM and flash memory. Also garbage
+memory, and page is migrated between DRAM and flash memory, also garbage
 collection and wear leveling is needed. For PCM devices, the system design
-is simpified as PCM is byte-addressable, garbage collection is no necessary
+is simpified as PCM is byte-addressable, garbage collection is not necessary
 and wear-leveling is simpler. The paper concludes that for a hybrid main
 memory system, OS should decide page migration issue to avoid endurance
 problems and high write latency of NVMM devices.
