@@ -14,6 +14,19 @@ CPU caching and write reordering, thus they are not eligible NVMM file systems.
 Most researches design NVMM file systems from scratch. 
 
 \textbf{eNVy} eNVy~\cite{eNVy} is a early exploration of NVMM storage system
+design. It proposes a system that attaches flash memory to the memory
+bus, and using SRAM as write buffer to achieve high bandwidth and low latency.
+\textbf{Conquest}~\cite{conquest} is a NVMM/Disk hybrid file system.
+With the observation that most acesses are to small files and most storage is
+comsumed by large files, Conquest puts all small files and metadata in NVMM,
+while disks only hold the data content of large files. With Conquest, the most
+frequest accesses to files are satisfied in NVMM and the overall performance is
+improved. ~\cite{mmfs} tries to improve file system performance by mapping
+NVMM pages into application's address space so that they can be accessed
+directly. 
+
+\ignore{
+\textbf{eNVy} eNVy~\cite{eNVy} is a early exploration of NVMM storage system
 design. It proposes a system that attaches flash to the memory
 bus, and using SRAM to achieve high bandwidth and low latency. At that time
 there is no real byte-addressable NVMM technology, so eNVy uses flash memory
@@ -25,20 +38,12 @@ bandwidth. To do the cleaning efficiently, eNVy divide flash pages into
 segments and lower the utilizations of hot segments to reduce the cleaning
 time.
 
-\ignore{
 eNVy is not using real byte-addressable NVMM devices, but its implementation
 shows insight for SSD designs. Current commercial SSD works mainly like
 eNVy: SSD uses DRAM as write buffers, deploy FTL layer to do the page remapping
 , and perform garbage collection in the background to provide available flash
 pages and wear leveling.
 }
-
-\textbf{Conquest}~\cite{conquest} is a NVMM/Disk hybrid file system.
-With the observation that most acesses are to small files and most storage is
-comsumed by large files, Conquest puts all small files and metadata in NVMM,
-while disks only hold the data content of large files. With Conquest, the most
-frequest accesses to files are satisfied in NVMM and the overall performance is
-improved.
 
 \textbf{SCMFS}~\cite{scmfs} is a file system designed for NVMM that
 reuses the memory
@@ -77,7 +82,7 @@ well with NVMM size.
 }
 
 An evolution of SCMFS, \textbf{Superpage}~\cite{superpage} further improves
-SCMFS performance by allocating larger pages and reducing TLB misses. Superpage
+SCMFS performance by providing large page allocation. Superpage
 allocates normal 4KB pages for small files and file 
 metadata while allocating 2MB superpages for larger files, and improve overall
 performance with less TLB misses.
@@ -99,7 +104,7 @@ state during system failure. To update data with shadow paging, file system
 does not write new data in-place; instead, it makes a copy of the old data,
 update the copy with new data, and then update the pointer in the upper layer
 atomically to point to the new data. Shadow paging guarantees the update is done
-atomically and file system is always in a consstent state.
+atomically and file system is always in a consistent state.
  ZFS~\cite{zfs} and WAFL~\cite{wafl} are two file
 systems that use shadow paging. However, traditional shadow paging cascades
 the copy-on-write operation from the modification place up to the root of 
@@ -151,19 +156,20 @@ performance potential of NVMM to user applications.
 
 The author analyzes several approaches to enforce consistency, and finds out
 using NVMM as a write-back cacheable memory and explicitly flushing modified
-data from CPU cache (\emph{clflush}) works well. However, current \emph{clflush}
+data from CPU cache (\texttt{clflush}) works well.
+However, current \texttt{clflush}
 implementation is strongly ordered and incurs performance penalty. Instead,
-PMFS proposes a optimized \emph{clflush} implementation which has  weaker
+PMFS proposes a optimized \texttt{clflush} implementation which has  weaker
  ordering
 and hence improve performance. To provide the write ordering PMFS proposes
-a hardware primitive, \emph{pm\_wbarrier} to guarantee durability of NVMM stores
+a hardware primitive, \texttt{pm\_wbarrier} to guarantee durability of NVMM stores
 already flushed from CPU caches.
 
 As a file system, PMFS also provides consistency. BPFS uses a file-grained
 shadow paging mechanism, while PMFS uses logging. There are two kinds of logging
 in file system implementation, redo and undo logging. Undo logging in PMFS
-requires a \emph{pm\_wbarrier} for each log entry while redo logging requires
-only two \emph{pm\_wbarrier} in a single transaction. However, undo logging
+requires a \texttt{pm\_wbarrier} for each log entry while redo logging requires
+only two \texttt{pm\_wbarrier} in a single transaction. However, undo logging
 is easy to implement and PMFS uses undo logging. Whenever there is an update
 to the PMFS metadata, PMFS copies the original value to the log entry and
 make it persistent before write the new value in-place. PMFS uses the
@@ -182,10 +188,7 @@ IO operations. With DAX support the NVMM pages are directly mapped into
 application's address space and bypass the page cache and block layer.
 In contrast, BPFS does not support \texttt{mmap}.
 PMFS also supports large page size to decrease the page table size and
-TLB entries. ~\cite{mmfs} is another implementation of NVMM file system
-which supports DAX interface. It integrates memory management with file system
-to manage NVMM, allocate NVMM in pages and directly map to application
-address space to gain better performance.
+TLB entries.
 
 \ignore{
 \subsection{Conclusion} 
@@ -218,9 +221,25 @@ be visible to other clients. Another optimization Aerie does is to using
 a in-memory cache of path names to speed up name resolution.
 
 Aerie designs a file system, PXFS wich complies with POSIX semantics.
-To further show the impact of POSIX interfaces on performance, they also design a flat
-key-value store storage system (FlatFS), which applications access file
+To further show the impact of POSIX interfaces on performance, they also design 
+a flat key-value store storage system (FlatFS), which applications access file
 through a simple put/get/erase interface. FlatFS is simpler, avoiding the
-overhead of name resolution and accelerates file sharing. The evalution shows FlatFS
-outperforms PXFS by up to 109\%, leading us to rethink the file system interface design.
+overhead of name resolution and accelerates file sharing, and hence improve
+performance over PXFS.
 
+\textbf{Summary} NVMM file systems need to provide atomicity and consistency.
+For atomicity, they use logging and shadow paging just like disk file systems.
+They also use \texttt{clflush} and memory barriers to make sure data is
+flushed to NVMM in order. These operations are expensive, and they rely
+on hardware to provide efficient primitives, such as fast clflush (PMFS) and
+epoch barrier (BPFS).
+
+NVMM file systems provide a legacy interface to existing applications. However,
+this compatiability also hurts performance of NVMM. For example, NVMM
+file systems need to be compatible with POSIX file interface, and all the
+metadata updates need to go to kernel and pay the mode switch overhead.
+Aerie moves the metadata updates to user space and propose a simpler and more
+efficient file system interface, leading us to rethink the NVMM
+file system design: to fully exploit the NVMM performance, NVMM file systems
+should jump out the circle of disk file system design and sacrifice some
+legacy compatiability.
