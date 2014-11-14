@@ -40,19 +40,22 @@ failure to memory and tested the system with thousands of reboot. This makes
 it more reliable.
  
 \textbf{Rio Vista}~\cite{riovista} is an evolutionary work of Rio,
-Rio Vista is a
-user-level, recoverable-memory library, and it runs on Rio.
+a user-level, recoverable-memory library, and it runs on Rio.
+With the persistent file cache provided by Rio,
+Rio Vista uses one undo log to achieve a recoverable memory system,
+and it eliminates the redo log and unnecessary memory copies.
+Rio Vista is simple and efficient, handles only the basic transaction features
+of atomicity and persistency. Like Rio, it does not address the write ordering
+issue and CPU caching issue, which undermines its credability. 
 
+\ignore{
 Traditional recoverable memory system has to maintain two logs. With a write
 operation, the original value needs to be copy to a undo log to support user
 aborts. Then the updated data is written to a redo log on the disk. After
 the redo log is full, data is copied to the original place and redo log is
 truncated. These involves two logs and three memory copy operations.
 
-With the persistent file cache provided by Rio,
-Rio Vista just use one undo log to achieve the same recoverable memory system,
-and it eliminates the redo log
-and unnecessary memory copies. When
+When
 application starts a transcation, Rio Vista copies the original data to the 
 undo log, which is kept in NVMM provided by Rio, and then application can
 write new data in-place and discards the undo log by the end of the transaction.
@@ -66,6 +69,7 @@ TPC-C.
 Rio Vista is trying to be simple, handles only the basic transaction features
 of atomicity and persistency. Like Rio, it does not address the write ordering
 issue and CPU caching issue, which undermines its credability. 
+}
 
 \textbf{UBJ}~\cite{UBJ} is a union of buffer cache and journaling system,
 which supports in-place commit. In UBJ, the buffer cache and journal area
@@ -105,8 +109,8 @@ result, it can eliminate both the system call overhead required to enter the
 kernel and the file system overhead required to locate stored data and perform
 permission checks.
 Figure~\ref{fig:dachell} shows the high-level architecture of
-\DAChell{}. An NVMM-aware file system (e.g.,
-PMFS~\cite{PMFS}) manages the NVMM space and allows users to create and manage
+\DAChell{}. An NVMM file system (e.g.,
+PMFS) manages the NVMM space and allows users to create and manage
 files that reside in the NVMM.
 
 \DAChell{} is implemented as an user space library, \libd{}, that transparently 
@@ -126,8 +130,11 @@ application buffers and the memory mapped file.  Other operations such as
 \texttt{lseek()} simply update the state (e.g., the current file pointer) that
 \DAChell{} maintains about each open file.  Consequently, common-case accesses
 require no calls to the operating system, avoiding costly system calls and 
-operating system and file system overheads.
+operating system and file system overheads. However, any operations that
+modify file system metadata still enter the kernel. This means \DAChell{}
+helps performance less for appends than for normal write operations.
 
+\ignore{
 \DAChell{} cannot eliminate all interactions with the operating system.  In
 particular, any operations that modify file system meta data still must enter
 the OS.  This means that \DAChell{} helps performance less for appends than for
@@ -137,6 +144,7 @@ Also, the updates to the file's modification time do not occur as they
 would with normal accesses.  However, many performance-intensive applications
 already disable file modification and access time updates to improve
 performance.
+}
 
 \DAChell{} divides file into 2MB chunks as \texttt{mmap()} unit. This
 reduces the number of \texttt{mmap()} operations, and perform well as 
@@ -225,14 +233,12 @@ operation called \CChell{}.  \CChell{} uses NVMM to provide a reliable,
 consistent, write-back cache of data that resides in an existing file system.
 \CChell{} provides fast access to the cached data using the same techniques
 that \DAChell{} uses but it accesses cached data rather than actual file data.
-This section describes the differences between \CChell{}
-and \DAChell{}.
 
 Figure~\ref{fig:CChellstack} shows the system architecture of \CChell{}.
 Like \DAChell{}, there is an userspace library, \lib{} to handle cache
 hits, but \CChell{} also adds a kernel module, \drv{}, to
-manage the contents of the cache and interact with the file system on the
-backing store device.
+manage the contents of the cache, interact with the file system on the
+backing store device and perform cache write back and eviction.
 
 The only difference in \libd{} and \lib{} is in
 how they detect and react to a miss.  \Libd{} detects a miss when it
@@ -243,19 +249,21 @@ it issues an \texttt{ioctl()} to \drv{} requesting that
 it load the data from the backing store (if needed), and then map the data into
 the application's address space.
 
+\ignore{
 \Drv{} manages the data cached in the NVMM.
 It copies data between cache pages and the backing store device,
 memory maps the requested cache pages to the application's address space,
 and handles cache write back and eviction.
+}
 
 When \drv{} receives the \texttt{ioctl} request from \lib{},
 it first checks the
-file Inode permission to make sure it is a valid request.  Then it checks if 
-the requested data is in the cache,
-and loads it, if required.
-Next, \drv{} copies data from the user buffer to the cache pages if it is
-a write, or from the backing store device to the cache pages and user buffer if 
-it is a read. Then it calls \texttt{mmap()} to map the cache pages to
+file Inode permission to make sure it is a valid request.  If 
+the requested data is in the cache, \drv{} simply maps it and returns the mapped
+address.
+Otherwise \drv{} allocates cache pages, copies data from the backing store
+ device if it is a read,
+and then calls \texttt{mmap()} to map the cache pages to
 the application's address space and returns the mapped address and length
 to \lib{}.
 
@@ -344,3 +352,17 @@ consistent state.
 Evaluation result shows \CChell{} can
 reduce 4~kB access latency by up to 50\% and improve Berkeley-DB performance
 by up to 4.8\x{} relative to file access using the system's file buffer.
+
+\textbf{Summary} With higher density, NVMM is a good replacement of DRAM page
+cache,
+As NVMM cache is persistent, data does not need to be sync to disk,
+and the expensive \texttt{sync()} operation on DRAM cache becomes 
+an efficient and
+light-weight CPU cache flush on NVMM cache.
+
+However, NVMM file cache still needs the consistency and atomicity guarantee
+to recover from system failure, and NVMM cache systems use logging or 
+shadow paging to resolve the issue. Another issue is file metadata updates
+still need to go to kernel to become persistent. NVMM cache systems may
+integrate some Aerie features such as user space metadata updates to address
+ the issue.
