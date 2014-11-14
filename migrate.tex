@@ -1,16 +1,19 @@
-\section{NVMM/DRAM hybrid system design} 
+\section{DRAM extension} 
 \label{sec:migration}
 
 Although NVMM has low power consumption and high density comparing to DRAM,
 It is still not good enough to replace DRAM entirely due to the slow write
-latency and low endurance. We expect in the future DRAM and NVMM
-will reside on the system memory bus together.
-Thus, how to utilize NVMM's persistency property while reduce the writes to
-NVMM to hide the write latency and extend endurance becomes an interesting
+and low endurance. We expect in the future DRAM and NVMM
+will reside on the system memory bus together. Thus, how to design a
+NVMM/DRAM hybrid system becomes an interesting
 topic and several researches contributes to this area.
 
 The most common idea is to direct write-intensive pages to DRAM and read-only
 or read-intensive pages to NVMM.
+Mogul. et al~\cite{Mogul} invesitgates the necessary operating system support
+for NVM+DRAM hybrid main memory, concludes that OS should decide page
+migration issue to avoid endurance problems and high write latency of NVMM
+devices.
 \cite{pcmalloc} allocate heap and stack segments with DRAM pages which are
 updated frequently, and allocate NVMM pages to text/bss/data segments as
 they are updated infrequently.
@@ -24,6 +27,8 @@ relies on a hardware memory controller to log the write counts to each page,
 while a software module swap pages between DRAM and NVMM and does wear-leveling.
 \textbf{RaPP}~\cite{RaPP} implements the page migration inside the memory
 controller to monitor access patterns and migrate pages between NVMM and DRAM. 
+
+\ignore{
 Mogul. et al~\cite{Mogul} describes the necessary operating system support for
 NVM+DRAM hybrid main memory. The paper explores two possible NVM devices:
 flash memory and PCM device to reside on the memory bus. As flash memory
@@ -36,7 +41,6 @@ and wear-leveling is simpler. The paper concludes that for a hybrid main
 memory system, OS should decide page migration issue to avoid endurance
 problems and high write latency of NVMM devices.
 
-\ignore{
 \textbf{RaPP}~\cite{RaPP} implements the page migration inside the memory
 controller
 to monitor access patterns and migrate pages between NVMM and DRAM. Rapp
@@ -72,6 +76,9 @@ to the NVMM is shifted by the rotate number to make
 the writes uniform across all 16 lines in the page.
 This helps to boost the system endurance by 3\x{}.
 
+Some applications only aim to use NVMM as DRAM and do not require consistency
+support. To benefit from this usage model, systems are proposed that
+manage NVMM both as volatile and non-volatile memory.
 \textbf{Memorage}~\cite{memorage} argues that NVMM-based systems will have large
 capacity of NVMM that need to be managed as both memory and storage in
 an integrated manner to make the best performance and trade-offs. For exmaple,
@@ -107,18 +114,12 @@ applies a smart refresh mechanism to eliminate unnecessary refresh operations
 by checking the resistance level. NVM Duet is another exmaple of exploiting
 optimizations from the different NVMM usages.
 
-To reduce the cost of consistency such as logging and CPU cache flushing,
-\textbf{NVMCap}~\cite{NVMCap}
- proposes several optimizations to current NVMM systems.
-
-NVMCap divides the applications into two categories: those
-use NVMM for capacity without persistence (NVMCap), and those use the
-persistence (NVMPersist). NVMCap provides two different
-categories of NVMM APIs to these two kinds of aaplications: the NVMCap
-applications do not require data persistence and hence do not flush state
-of cache, while NVMPersist applications frequently flush cache to obtain
-durability guarantees.
-
+\textbf{NVMCap}~\cite{NVMCap} resembles NVM Duet that it also divides
+the applications into two categories: those use NVMM for capacity without
+persistence (NVMCap), and those use the persistence (NVMPersist). Cache flushing
+are eliminated for NVMCap applications.
+ 
+NVMCap proposes several optimizations to current NVMM systems.
 Current systems keep metadata in NVMM to recovery from system failure.
 These metadata are updated frequently during system running and make
 them persistent adds allocator overhead. To overcome the issue, NVMCap
@@ -131,3 +132,15 @@ word log for metadata updates, and coarse-grained object log for object
 updates. word log contains the full metadata, while object log indicates
 the address and size of the object. This reduces log size and NVMM writes for
 object as eliminates the need to log the entire object.
+
+\textbf{Summary} As NVMM has higher density and lower power consumption,
+applications may use it as DRAM extension.
+To hide the high write latency of NVMM and
+improve endurance, OS MMU should put write-intensive pages in DRAM, and migrate
+pages between DRAM and NVMM dynamically. This requires write count logging and
+page migration mechanism, which can be implemented in both hardware and
+software. As NVMM pages can be accessed from user space directly, we claim 
+that at least write count logging should be implemented in hardware.
+
+When applications access NVMM as DRAM, the persistency guarantee can be relaxed.
+NVMM systems can benefit from this to improve performance. 
