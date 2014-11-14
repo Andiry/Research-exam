@@ -65,34 +65,28 @@ of them rely on some hardware primitives assistance, such as BPFS and PMFS.
 However, they try to minimize the hardware modifications and resolves the
 atomicity and consistency problems with software solutions,
 such as explicit CPU cache flushing and logging.
-They still add extra overheads. Some researches try to leverage more hardware
+Some researches try to leverage more hardware
 solutions and make the software simple and efficient.
 
 \textbf{WrAP}~\cite{WrAP} proposes a system architecture
  that provides persistence
 ordering, persistence atomicity and persistence protection guarantees. 
-WrAP consists of three components: a victim persistence cache (VPC); a log
-area of NVMM that keeps log of update operations and an asynchronous channel
-that used to propagate slow log records to NVMM. WrAP provides a lightweight
-firewall prevents arbitrary writes to NVMM and a non-intrusive interface
-for interaction between the cache system and NVMM.
+WrAP keeps a log of update operations, but the key change is 
+a victim persistence cache (VPC).
 
 Every write to NVMM in WrAP results in two update paths: an atomic update to
 the log area in NVMM, and a normal store instruction to the NVMM address. Both
-paths are performed simultaneously. VPC hold PCM entries that are evicted
-frpm the last-level cache and serves as the final backing store for evicted
-variables. VPC does not need to be persistent.
-Finally, the update to the home locations will be made
-independently by a COPY module that is part of the WrAP controller. 
-By propagate the write operation in two paths, WrAP not only makes the 
-write atomic, but also avoid the overhead of CPU cache flushing.
-Unfortunately WrAP does not provide evaluation of their system.
-
+paths are performed simultaneously. VPC holds PCM entries that are evicted
+from the last-level cache, make sure they do not go to the actual address;
+instead, the update to the home locations will be made
+independently by copying the log entries.
+By propagate the write operation in two paths, WrAP avoids the overhead of CPU
+cache flushing.
 \textbf{SoftWrap}~\cite{softWrAP}
  is the software implementation version of WrAP.
-Instead of applying a WrAP controller and VPC, SoftWrAP installs a library
-to transform applications to use the WrAP APIs to access the NVMM. WrAP
-uses VPC to hold PCM entries evicted from CPU cache, while SoftWrAP
+Instead of VPC, SoftWrAP installs a library
+to transform applications to use the WrAP APIs to access the NVMM.
+SoftWrAP
 uses alias update, routes the cache entries to write to a different location
 without affecting the original data. SoftWrAP achieves the same persistent
 guarantee as WrAP without hardware modification, but not as efficient as WrAP.
@@ -119,9 +113,7 @@ for nesting, distribution and concurrency control, the implementation of
 RVM becomes very simple and easy to use. RVM manages recoverable memory in
 segments, each with a file or a disk partition as backing store. Applications
 calls the interfaces provided by RVM to begin and commit transactions. RVM
-uses a undo/redo logging strategy to make the persistency guarantee. Old values
-are copied to undo log, while new values are written to the redo log. Applications call log control commands to force redo log to write into the disks
-and become persistent.
+uses a undo/redo logging strategy to make the persistency guarantee. 
 
 \textbf{WSP}~\cite{WSP} stands for whole-system persistence.
  It aims at systems where
@@ -141,27 +133,26 @@ NVMM and then halts. On the recovery, resume routine does the inverse to recover
 the system to the consistent state. As WSP eliminates the runtime persistency
 operations, it shows good performance comparing to NV-heaps.
 
+\ignore{
 A remaining issue of WSP is device recovery. As the device drivers are restored
-but the devices lost power and need to re-initialize, the state of software
-and hardware is not consistent. WSP proposes to clean up device state on
-the resume path, or virtualize the devices by using a VM hypervisor.
-
+-but the devices lost power and need to re-initialize, the state of software
+-and hardware is not consistent. WSP proposes to clean up device state on
+-the resume path, or virtualize the devices by using a VM hypervisor.
+}
 
 \subsection{Protection} 
 \label{sec:protection}
 
-As NVMM is sitting on the system memory bus and expose the memory range
+As NVMM is sitting on the system memory bus and exposes the memory range
 to the applications, how to protect it from stray writes become a issue.
 \textbf{PMBD}~\cite{PMBD}
- is an attempt to leverage the existing modules that the 
-operating system provides and makes the system light-weight and easy to
-implement. Rather than the systems we have seen,
-PMBD treats NVMM as a block device sitting on the memory bus. The advantage
-is that it is easy to provide protection and order persistence for
+is an attempt to make a robust NVMM system free from stray writes.
+PMBD treats NVMM as a block device sitting on the memory bus, as it is
+easier to provide protection and order persistence for
 a block device than a memory device.
 
 PMBD proposes several solutions to protection and order persistence and
-compare the performance. For protection, one solution is to disable page
+compare the performance. To enforce protection, one solution is to disable page
 table entry for write until needed; however, this incurs big penalty on
 TLB flush and performance is bad. Buffer the write requests and commit
 them as a batch helps to improve the performance for sequential writes,
@@ -181,13 +172,17 @@ tests \texttt{movntq/sfence} generally works better than \texttt{clflush/mfence}
 solution.
 }
 
-PMBD provides protection of NVMM with the cost of performance.
+PMBD provides protection of NVMM with the cost of performance, as it appears
+as a block device and cannot be accessed from user space directly.
+
+\ignore{
 The fact that
 PMBD treats NVMM as a block device incurs significant overhead
 as Linux block layer is designed for slow storage devices.
 Also PMBD does not allow applications to access NVMM directly.
 We don't think PMBD is the right solution to utilize NVMM, but it provides
 some insights on NVMM protection, which is not addressed by system such as BPFS.
+}
 
 \ignore{
 \textbf{CDSMM}~\cite{CDSMM} also presents the memory management module design
@@ -242,10 +237,7 @@ swapping at coarse-grained granularity.
 
 Implement wear leaveling in software has several disadvantages: first, it makes
 the software more complex. Second, software needs additional space to store
-the mapping data. If the 
-However, researches propose a smaller shift granularity such as line size
-or byte level.
-At this shift level, the mapping information would consume much more space.
+the mapping data.
 Also, each access to NVMM needs to check the mapping information, makes it
 a performance bottleneck.
 Third, Software wear leveling cannot be more efficient
@@ -256,7 +248,7 @@ makes NVMM robust to malicious attacks. \cite{secrefresh} and \cite{freep}
 are another two hardware solutions to balance the writes to PCM and improve
 lifetime.
 
-\subsection{Rethink the POSIX File Interface}
+\subsection{POSIX File Interface overhead}
 \label{sec:noposix}
 
 Most applications access the storage devices via POSIX interfaces, which are
@@ -269,20 +261,20 @@ requires the programmer to specify the buffer that \texttt{read()} copies data
 to. POSIX places no constraints on the size
 or alignment of the buffer, so a copy operation is usually unavoidable.  For
 slow disks and even SSDs, the cost of this copy is small.
-
-\cfigure[Graphs/latency-break-quill.pdf,{\figtitle{Chell-Direct 4~kB read/write latency breakdown. Memory copy accounts for 76\% of total latency. Page table is populated on file open, so the page fault overhead is eliminated.}},fig:latency-break]
-
-But for NVMM based system such as \DAChell{} and \CChell{}, the relative cost
- is much larger.
-Figure~\ref{fig:latency-break} shows the latency breakdown of 4~kB read and
+But for NVMM based system, the relative cost is much larger.
+We test the latency of 4~kB read and
 write operations of \DAChell{} with page table populated and page fault overhead
-eliminated.  The memory copy accounts for 76\% for 4~kB
-read and 77\% for 4~kB write. For \CChell{}, the situation is similar.
+eliminated, and find out that the memory copy latency accounts for 76\% for read
+and 77\% for write.
 This high overhead of memory copying makes the POSIX interface
 itself a major impediment to exploiting the performance of NVMM.
 
 To eliminate it, we propose a new file read interface optimized for
 NVMM-based storage systems.  The interface provides a new function:
+
+\ignore{
+\cfigure[Graphs/latency-break-quill.pdf,{\figtitle{Chell-Direct 4~kB read/write latency breakdown. Memory copy accounts for 76\% of total latency. Page table is populated on file open, so the page fault overhead is eliminated.}},fig:latency-break]
+}
 
 \vspace{1em}
 \begin{tabular}{l}
