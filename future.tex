@@ -19,13 +19,19 @@ On the other hand, if NVMM replace the slower storage devices, the DRAM/storage
 architecture need to be redesigned. Several common operating system features
 may be obsoleted or needs modification:
 \begin{itemize}
-\item \textbf{Is file system still necessary?}
-Disks and other storage devices do not provide any
-protection mechanism and rely on file system to protect the data, but NVMM
-can be protected by MMU hardware. A file system resides in the kernel and
-talks to the virtual file system layer, which adds too much overhead to access
-NVMM, and frequent metadata change also undermines performance. We argue that
-traditional kernel file system is not suitable for NVMM. 
+\item \textbf{File system design}
+Current NVMM file systems still work like disk file systems in many ways.
+However, the huge differences between disks and NVMM make us rethink file
+system design for NVMM.
+Disks file systems provide protection as storage devices do not have any
+protection mechanisms, but NVMM can be protected by MMU hardware.
+Traditional file systems are hierarchical
+that provide locality disks can make use of, while NVMM file systems do not
+need to be organized in this way.
+Seltzer et al.~\cite{Seltzer} claims that
+existing hierarchical file systems are dead and files should be organized by
+how they are accessed instead of names, provides insight into NVMM file system
+design.
 \item \textbf{Allocation granularity}
 Current operating systems allocate DRAM with 4KB pages by default,
 and most NVMM system resues the size for NVMM allocation. Superpage argues
