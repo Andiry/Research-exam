@@ -157,9 +157,11 @@ These challenges must be addressed in the NVMM system software design.
 Researchers try to overcome these issues without sacrificing the performance
 of NVMM, aiming at provide a fast, easy to use and robust system to users.
 
-
 \subsection{Software for NVMM}
 \label{sec:NVMM}
+
+\cfigure[Figures/NVMM-Stack.pdf,{\figtitle{NVMM software architecture}: NVMM
+system software can manage NVMM as a kernel module, or resides in user space as a library. Some of them provide applications with direct access to NVMM via mmap().},fig:nvmmstack]
 
 When non-volatile memory emerges, there have been researches about how to
 integrate it into the system. They can be used to build solid state drives
@@ -176,8 +178,12 @@ suitable to replace DRAM direcly, and system software is necessary to
 manage the NVMM.
 
 Numerous researches propose different system software designs to
-manage the NVMM. Typical solution can be divided into the following
-four categories:
+manage the NVMM. Figure~\ref{fig:nvmmstack} shows the typical NVMM system
+software architecture. Generally, there is a kernel module which manages
+NVMM, provide allocation and protection, such as file system or memory
+allocator. Some systems also have an user space library to provide applications
+with fast and safe access to NVMM.
+Typical solution can be divided into the following four categories:
 
 \begin{itemize}
 \item \textbf{File system} Persistent  NVMM is suitable for
