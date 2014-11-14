@@ -17,7 +17,7 @@ properly again, as writing to NVMM is persistent and cannot be fixed by a reboot
 
 On the other hand, if NVMM replace the slower storage devices, the DRAM/storage
 architecture need to be redesigned. Several common operating system features
-may be obsoleted or needs modficiation:
+may be obsoleted or needs modification:
 \begin{itemize}
 \item \textbf{Is file system still necessary?}
 Disks and other storage devices do not provide any
@@ -42,7 +42,7 @@ the space is wasted. A big file which spans multiple pages have a single
 access permission, and enforce the protection to each page is also a waste.
 Decouple the protection from allocation makes NVMM management much more
  flexible.
-\item \textbf{Impact to current memory system}
+\item \textbf{Impact to memory management unit}
 With NVMM, DRAM file cache does not exist anymore. With NVMM as file cache,
 data is persistent and does not need to sync to disk periodically, eliminates
 the expensive sync calls.
@@ -65,7 +65,7 @@ and they have proposed different approaches to make the common path as fast
 as possible.
 Arrakis~\cite{Arrakis} and IX~\cite{IX} argues that seperating data plane
 from control plane could improve application performance by accelerating
-data accesses. MonetaD~\cite{monetad} and BankShot~\cite{BankShot} access
+data accesses. Moneta-D~\cite{monetad} and BankShot~\cite{BankShot} access
 SSD devices directly from user space to eliminate the mode switch overhead.
 FlexSC~\cite{FlexSC} tries to reduce the system call overhead,
 and works like MegaPipe~\cite{MegaPipe} tries to move work to user space and
