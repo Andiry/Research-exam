@@ -137,7 +137,7 @@ of NVMM, a single update may be serviced as several write requests. Therefore,
 a power failure during the serial operations may leave the update partially
 completed and the data in an inconsistent state. This is called atomicity issue.
 To address the issue, each update operation should be performed in an atomic
-transaction way, i.e. "All or nothing".
+transaction way, i.e. ``All or nothing''.
 The common approaches to achieve atomicity includes:
 
 \begin{itemize}

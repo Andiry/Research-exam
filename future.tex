@@ -30,8 +30,8 @@ that provide locality disks can make use of, while NVMM file systems do not
 need to be organized in this way.
 Seltzer et al.~\cite{Seltzer} claims that
 existing hierarchical file systems are dead and files should be organized by
-how they are accessed instead of names, provides insight into NVMM file system
-design.
+how they are accessed instead of by names, provides insight into NVMM file
+system design.
 \item \textbf{Allocation granularity}
 Current operating systems allocate DRAM with 4KB pages by default,
 and most NVMM system resues the size for NVMM allocation. Superpage argues
@@ -57,7 +57,7 @@ Instead it swaps DRAM pages to NVMM, or it can borrow NVMM pages directly.
 \item \textbf{New APIs for NVMM access}.
 As pointed out in Section~\ref{sec:noposix}, current POSIX file 
 interface may impace performance when accessing data on NVMM.
-The works described in Section~\ref{sec:access} provide their own interface
+The works described in Section~\ref{sec:access} provide their own interfaces
 for applications to access NVMM efficiently. As there is no standard, each of
 them proposes different APIs and applications need to be modified accordingly.
 We assume there should be a new standard API for NVMM access that both
@@ -75,7 +75,8 @@ data accesses. Moneta-D~\cite{monetad} and BankShot~\cite{BankShot} access
 SSD devices directly from user space to eliminate the mode switch overhead.
 FlexSC~\cite{FlexSC} tries to reduce the system call overhead,
 and works like MegaPipe~\cite{MegaPipe} tries to move work to user space and
-batch system calls to reduce mode switches. Volos~\cite{system-scm} argues
+batch system calls to reduce mode switches. Volos et al.~\cite{system-scm}
+argues
 NVMM file system should be implemented largely as a user space library, rather
 than as a kernel-level service. All the naming and indexing should be provided
 in user-mode, the kernel is responsible only for NVMM protection and permission

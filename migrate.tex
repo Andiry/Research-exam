@@ -120,7 +120,7 @@ persistence (NVMCap), and those use the persistence (NVMPersist). Cache flushing
 are eliminated for NVMCap applications.
  
 NVMCap proposes several optimizations to current NVMM systems.
-Current systems keep metadata in NVMM to recovery from system failure.
+Current systems keep metadata in NVMM to recover from system failure.
 These metadata are updated frequently during system running and make
 them persistent adds allocator overhead. To overcome the issue, NVMCap
 keep metadata in DRAM buffer, and log the updates to NVMM to reduce NVMM
@@ -143,4 +143,5 @@ software. As NVMM pages can be accessed from user space directly, we claim
 that at least write count logging should be implemented in hardware.
 
 When applications access NVMM as DRAM, the persistency guarantee can be relaxed.
-NVMM systems can benefit from this to improve performance. 
+NVMM systems can benefit from this to improve performance. However, this
+requires applications to specify their usage pattern of NVMM. 

@@ -24,7 +24,7 @@
 	Native & Yes & No & No & No & No  \\\hline
 	\end{tabular}}
 	\vspace*{1mm}
-	\caption{\figtitle{Comparison of NVMM system software. * means in-place updates are only performed for memory stores to a single variable or at the granularity of cache line size.}}
+	\caption{\figtitle{Comparison of NVMM system software. * means in-place updates are only performed for memory stores to a single variable or at the granularity of cache line size. N/A means not specified in paper.}}
 	\label{table:comparison}
 \end{table}
 
@@ -264,8 +264,8 @@ slow disks and even SSDs, the cost of this copy is small.
 But for NVMM based system, the relative cost is much larger.
 We test the latency of 4~kB read and
 write operations of \DAChell{} with page table populated and page fault overhead
-eliminated, and find out that the memory copy latency accounts for 76\% for read
-and 77\% for write.
+eliminated, and find out that the latency of memory copy to user buffer
+accounts for 76\% for read and 77\% for write.
 This high overhead of memory copying makes the POSIX interface
 itself a major impediment to exploiting the performance of NVMM.
 

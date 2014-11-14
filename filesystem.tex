@@ -84,7 +84,7 @@ well with NVMM size.
 An evolution of SCMFS, \textbf{Superpage}~\cite{superpage} further improves
 SCMFS performance by providing large page allocation. Superpage
 allocates normal 4KB pages for small files and file 
-metadata while allocating 2MB superpages for larger files, and improve overall
+metadata while allocating 2MB superpages for larger files, and improves overall
 performance with less TLB misses.
 
 \textbf{BPFS}~\cite{BPFS} is a good example to show how to design a NVMM
@@ -220,7 +220,7 @@ uses a batched and delayed metadata update mechanism, only when updates need to
 be visible to other clients. Another optimization Aerie does is to using
 a in-memory cache of path names to speed up name resolution.
 
-Aerie designs a file system, PXFS wich complies with POSIX semantics.
+Aerie designs a file system, PXFS that complies with POSIX semantics.
 To further show the impact of POSIX interfaces on performance, they also design 
 a flat key-value store storage system (FlatFS), which applications access file
 through a simple put/get/erase interface. FlatFS is simpler, avoiding the
