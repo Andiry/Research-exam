@@ -6,7 +6,8 @@ challenges: how to create and manage non-volatile memory, how to ensure
 consistency during system failures, and how to avoid common programming
 bugs, such as dangling pointers, multiple free()s, and locking errors.
 
-To facilitate application usage, researches manage NVMM as heaps~\cite{nvheaps},
+To facilitate application usage, NVMM programming models expose NVMM to
+applications as heaps~\cite{nvheaps},
 trees~\cite{cdds} and key-value stores~\cite{echo}, provide users with a fast,
  persistent and easy-to-use interface to NVMM.
   
@@ -153,7 +154,7 @@ mnemosyne} and hardware primitives~\cite{BPFS, PMFS} to provide persistency.
 All these operations introduce overhead and undermine NVMM performance.
 }
 
-\textbf{Summary} Researches on NVMM programming models try to provide
+\textbf{Summary} NVMM programming models try to provide
 applications with light-weight, easy-to-use, persistent object frameworks.
  They use the same technologies in NVMM file systems to provide atomicity and
 consistency, such as fence, clflush, logging and shadow paging,

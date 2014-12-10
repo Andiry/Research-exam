@@ -11,7 +11,7 @@ DRAM file systems such as ramfs and tmpfs can also run on NVMM, but they
 do not support recovery capability, and file system consistency may be 
 neutralized by
 CPU caching and write reordering, thus they are not eligible NVMM file systems.
-Most researches design NVMM file systems from scratch. 
+Most works design NVMM file systems from scratch. 
 
 \textbf{eNVy} eNVy~\cite{eNVy} is a early exploration of NVMM storage system
 design. It proposes a system that attaches flash memory to the memory
@@ -87,8 +87,8 @@ allocates normal 4KB pages for small files and file
 metadata while allocating 2MB superpages for larger files, and improves overall
 performance with less TLB misses.
 
-\textbf{BPFS}~\cite{BPFS} is a good example to show how to design a NVMM
-file system, and demonstrates the challenges in the implementation.
+\textbf{BPFS}~\cite{BPFS} demonstrates the benefits and challenges in the
+NVMM file system implementation.
 BPFS guarantees that
 each file system operation is performed atomically and in order.
 
@@ -102,7 +102,7 @@ performance.
 Shadow paging is a common file system design to keep file system in consistent
 state during system failure. To update data with shadow paging, file system
 does not write new data in-place; instead, it makes a copy of the old data,
-update the copy with new data, and then update the pointer in the upper layer
+updates the copy with new data, and then updates the pointer in the upper layer
 atomically to point to the new data. Shadow paging guarantees the update is done
 atomically and file system is always in a consistent state.
  ZFS~\cite{zfs} and WAFL~\cite{wafl} are two file
@@ -234,12 +234,14 @@ flushed to NVMM in order. These operations are expensive, and they rely
 on hardware to provide efficient primitives, such as fast clflush (PMFS) and
 epoch barrier (BPFS).
 
-NVMM file systems provide a legacy interface to existing applications. However,
-this compatiability also hurts performance of NVMM. For example, NVMM
-file systems need to be compatible with POSIX file interface, and all the
-metadata updates need to go to kernel and pay the mode switch overhead.
-Aerie moves the metadata updates to user space and propose a simpler and more
-efficient file system interface, leading us to rethink the NVMM
+With page-based allocation guanularity, NVMM file systems suffer from 
+TLB misses and scalability issues. Also, to provide legacy support,
+NVMM file systems are compatible with POSIX interfaces, and Aerie shows the
+overhead of POSIX interface plays an important part in the file system
+performance. 
+ 
+\ignore{
+ leading us to rethink the NVMM
 file system design: to fully exploit the NVMM performance, NVMM file systems
 should jump out the circle of disk file system design and sacrifice some
-legacy compatiability.
+legacy compatiability.}
