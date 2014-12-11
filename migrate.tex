@@ -1,8 +1,8 @@
-\section{DRAM extension} 
+\section{DRAM extensions} 
 \label{sec:migration}
 
 Although NVMM has low power consumption and high density comparing to DRAM,
-It is still not good enough to replace DRAM entirely due to the slow write
+it is still not good enough to replace DRAM entirely due to the slow write
 and low endurance. We expect in the future DRAM and NVMM
 will reside on the system memory bus together. Thus, how to design a
 NVMM/DRAM hybrid system becomes an interesting
@@ -10,11 +10,12 @@ topic and several researches contributes to this area.
 
 The most common idea is to direct write-intensive pages to DRAM and read-only
 or read-intensive pages to NVMM.
-Mogul. et al~\cite{Mogul} invesitgates the necessary operating system support
+Mogul et al.~\cite{Mogul} invesitgates the necessary operating system support
 for NVM+DRAM hybrid main memory, concludes that OS should decide page
 migration issue to avoid endurance problems and high write latency of NVMM
 devices.
-\cite{pcmalloc} allocate heap and stack segments with DRAM pages which are
+Park et al.~\cite{pcmalloc} allocate heap and stack segments with DRAM pages
+which are
 updated frequently, and allocate NVMM pages to text/bss/data segments as
 they are updated infrequently.
 \textbf{PCM3D}~\cite{pcm3d} combines the DRAM
@@ -56,12 +57,12 @@ solution, but with more sophisticated hardware design.
 
 Qureshi et al.~\cite{PCMHierarchy} proposes a PCM-based hybrid main memory
 system. To get the best capacity and latency trade-off, the system applies
-large capacity of PCM to hold most of the pages during program execution,
+large capacity of PCM to hold most of the pages during program execution
 and uses a DRAM buffer to absorb the writes. 
 
 The system tries to minimize writes to the NVMM to improve both performance
 and endurence. Cold data is fetched from disks directly to the DRAM buffer
-without going to the NVMM; Only when the DRAM buffer is full, dirty page is 
+without going to the NVMM; only when the DRAM buffer is full, dirty page is 
 evicted to the NVMM. This is called \emph{lazy-write organization}. Another
 optimization is \emph{line-level writeback}. Instead of writing the whole dirty
 page to the NVMM, the system records dirty data by 256 bytes linesize
@@ -98,7 +99,7 @@ to relax the write endurance of NVMM main memory and facilitate wear-leveling.
 which
 have different expectations of NVMM: some are seeking the persistency, while
 others just use NVMM as normal DRAM. As consistency is achieved via serializing
-write operations and CPU cache flushing, differentiate between the two usages
+write operations and CPU cache flushing, differentiating between the two usages
 makes sense to improve overall system performance.
 
 NVM Duet provides a hardware/software interface that enables memory controller

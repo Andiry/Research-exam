@@ -6,8 +6,8 @@ Three emerging non-volatile memory technologies promise to provide fast,
 phase change memory (PCM), and memristor-based memories. These new NVMs, also
 termed \emph{storage-class memory}~\cite{scm}, have the potential to replace
 the disks and change the storage hierarchy. In the following
-sections we briefly introduce each of them, then we introduce the software
-for NVMM and challenges they face.
+sections we briefly introduce each of them, then we introduce 
+NVMM software and implementation challenges.
 
 \subsection{Non-volatile memory technologies}
 \label{sec:hardware}
@@ -16,29 +16,30 @@ for NVMM and challenges they face.
 memory technology~\cite{PCM_EfficientMainMemory, PCMHierarchy}.
 PCM is built with Chalcogenide-based materials, which has
 two states, crystalline state and amorphous state. By
-injecting current to heat the memory cell to a high temperature for a period
-of time, the material will crystallize and the resistence reduces. 
+injecting current for a period of time,
+the material will crystallize and resistence reduces. 
 To reset the cell,
-apply a large enough current for a short period to melt down the
-material and it transitions into amorphous state with higher resistence.
- These two states can be read as "1" and "0". As transition into crystalline
+by applying a large enough current for a short period, 
+the material will melt down
+and transitions into amorphous state with higher resistence.
+These two states can be read as "1" and "0". As the transition into crystalline
 state requires longer current injection, PCM has slower writes comparing to
 reads.  
-As heating causes contraction of the cell, PCM has limited write endurance
-up to $10^8 - 10^9$ cycles.
+As heating causes cell contraction, PCM has limited write endurance
+up to $10^8$ to $10^9$ cycles.
  
 \textbf{Spin-Torque Transfer RAM} STT-RAM uses magnetic properties of 
 certain materials and electric charges to enable different persistent states 
-in memory cells. Each cell of STT-RAM has two ferromagnetic plates, with
+in memory cells. Each cell of STT-RAM has two ferromagnetic plates;
 one holds a particular polarity permanently, while the other can change the
 polarity. If the two plates have the same polarity, the cell stores "1",
-otherwise it stores "0". By applying a current STT-RAM can change the polarity
+otherwise it stores "0". By applying a current, STT-RAM can change the polarity
 of the plate with spin-transfer torque.
 STT-RAM promises potential of unlimited write cycles, and
 current prototype using tunneling magnetorresistence showed 32ns for
 read latency and 40ns for write latency, with 0.3mA power consumption
-per cell~\cite{sttram}. The disadvantage of STT-RAM is shrinking cell size is
-extremely difficult.
+per cell~\cite{sttram}. The disadvantage of STT-RAM is that 
+shrinking cell size is extremely difficult.
 
 \textbf{Memristor memory} is a resistive RAM device~\cite{memristor}.
 Applying electric field
@@ -48,8 +49,8 @@ performance could be comparable to DRAM, with write endurance up to $10^{10}$
 cycles. Currently memristor is still under development in the laboratory.
  
 Some vendors have produced non-volatile main memory devices, they are
-either small capacity and byte-addressable~\cite{micron-nvdimm},
-or large capacity but block-addressable~\cite{smart-system}.
+either small capacity and byte-addressable~\cite{micron-nvdimm}
+or large capacity and block-addressable~\cite{smart-system}.
 With emerging non-volatile technologies, we can expect
 large capacity, byte-addressable NVMMs to appear.
 
@@ -77,9 +78,9 @@ large capacity, byte-addressable NVMMs to appear.
 \label{sec:challenge}
 
 Although NVMM is sitting on the system memory bus and can be accessed
-via load and store operations like DRAM, its difference from DRAM
-makes the NVMM software design needs to consider several special
-characteristics:
+via load and store operations like DRAM, due to the difference between NVMM
+and DRAM,
+researchers need to consider several special characteristics:
 
 \textbf{Performance} Traditional storage devices are sitting on I/O bus
 (like SATA and USB) or high performance system bus such as PCIe. To access
@@ -94,7 +95,8 @@ DRAM, the processors should access them directly via load and store
 operations to fully exploit the NVMM performance.
 
 \textbf{CPU caching hierarchy}
-~\cite{CPUcaching} show the impact of CPU caching on the NVMM performance
+Bhandari et al.~\cite{CPUcaching} show the impact of CPU caching on the
+ NVMM performance
 and programming. Modern CPUs have store buffer to temporarily keep each store
 to hide the latency of cache, and WC buffer to batch the writes before
 flush to memory. Both store buffer and WC buffer are aiming to hide latency
@@ -107,7 +109,7 @@ persistency, applications must explicitly flush the cache lines for data
 updates. This approach is not only error-prone~\cite{singlelock}
 but also incurs significant
 performance penalty. In contrast, write-through mode removes unnecessary
-cache line flushes and reduce the software complexity, and write operations
+cache line flushes and reduces the software complexity, and write operations
 cannot benefit from fast CPU cache.
 
 \textbf{Write reordering} Modern processors may reorder write operations to improve
@@ -124,7 +126,7 @@ several solutions are proposed:
 \item Use write-through caching to make sure for each operation
 data is flushed to the NVMM. This is a slow approach. 
 \item Flush the entire cache when encounter a memory barrier. This solution
-adds significant overhead to the performance.
+adds significant overhead to performance.
 \item Track the dirty cache lines and flush them accordingly. This is much
 more efficient than flushing the entire cache, but may need software bookkeeping.
 \item Use hardware primitives. This is the most efficient approach, but requires
@@ -143,9 +145,9 @@ The common approaches to achieve atomicity includes:
 \begin{itemize}
 \item Hardware atomic operations. This solution is simple but may require
 hardware modifications.
-\item Logging. Logging is a widely-used mechanism in file system and databases
-to ensure write atomicity. There are two kinds of logging: Undo logging, which
-saves the original value to the log and then update in place; Redo logging,
+\item Logging. Logging is a widely used mechanism in file system and databases
+to ensure write atomicity. There are two kinds of logging: undo logging, which
+saves the original value to the log and then update in place; redo logging,
 which write the new data to the log and then copy to the target place.
 \item Copy-on-write operation. This is used in tree structure updates. Whenever
 update the node, a new node is created and the pointer in the parent node is
@@ -155,7 +157,7 @@ updated atomically. This may result in cascade update up to the root.
 
 These challenges must be addressed in the NVMM system software design.
 Researchers try to overcome these issues without sacrificing the performance
-of NVMM, aiming at provide a fast, easy to use and robust system to users.
+of NVMM, aiming at providing a fast, easy to use and robust system.
 
 \subsection{Software for NVMM}
 \label{sec:NVMM}
@@ -164,12 +166,13 @@ of NVMM, aiming at provide a fast, easy to use and robust system to users.
 system software can manage NVMM as a kernel module, or resides in user space as a library. Some of them provide applications with direct access to NVMM via mmap().},fig:nvmmstack]
 
 When non-volatile memory emerges, there have been works about how to
-integrate it into the system. They can be used to build solid state drives
+integrate it into the system. Non-volatile memories can be used to build solid
+state drives
 instead of NAND flash, and NVM Express~\cite{NVMe} targets at accessing
 non-volatile memory devices attached through the PCIe bus. However, due to
 its byte-addressable and low-latency, high-bandwidth resemble to DRAM,
-put them on the processor memory bus become the most reasonable solution
-to fully exploit the performance of non-volatile memory.
+put non-volatile memory on the processor memory bus become the most reasonable
+solution to fully exploit the performance of non-volatile memory.
 
 Although using NVMM as system memory and access them like DRAM is simple,
 this approach does not exploit the persistence property of NVMM. Also, the
@@ -188,15 +191,15 @@ software architecture. Generally, there is a kernel module which manages
 NVMM, provide allocation and protection, such as file system or memory
 allocator. Some systems also have an user space library to provide applications
 with fast and safe access to NVMM.
-Based on the size of NVMM, typical solutions can be divided into
+Depends on the available capacity of NVMM, typical solutions can be divided into
 the following four categories:
 
 \begin{itemize}
 \item \textbf{File system} If NVMM technologies can provide NVMM
 that cheap and dense enough to replace disks entirely as persistent storage,
-then manage it with a file system to provide applications
+then manage with a file system to provide applications
 fast access is a good way to utilize NVMM. NVMM file system is compatible
-with POSIX API, does not require software modification, but need to take care
+with POSIX API, does not require software modification, but needs to take care
 of the consistency issue.
 
 \item \textbf{Programming model} If available NVMM is not big enough to store
@@ -207,10 +210,10 @@ Some works investigate fast and safe accessing models of
 NVMM, grant applications direct access to the NVMM from user space. 
 These solutions provide good performance but require software modifications.
 
-\item If we can only get NVMM at gigabyte level size,
+\item \textbf{DRAM extensions} If we can only get NVMM at gigabyte level size,
 use it to store persistent data may not be a good idea. However, we can still
 use NVMM to speedup the system. With the low power consumption and high density,
-NVMM is able to work as \textbf{ DRAM extension} to increase the system memory
+NVMM is able to work as an extension to DRAM to increase the system memory
 size. These
 works focus on how to utilize NVMM as DRAM extension and efficiently
 migrate memory pages between DRAM and NVMM.

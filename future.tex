@@ -34,16 +34,16 @@ how they are accessed instead of by names, provides insight into NVMM file
 system design.
 \item \textbf{Allocation granularity}
 Current operating systems allocate DRAM with 4KB pages by default,
-and most NVMM system resues the size for NVMM allocation. Superpage argues
+and most NVMM system reuses the size for NVMM allocation. Superpage argues
 that large page size such as 2MB reduces TLB misses, but it also yields
 space waste and coarse-grained protection. We assume NVMM should be allocated
 by extents, which provides both flexibility and fine-grained control. However,
 this means the TLB based protection needs to be redesigned.
 \item \textbf{Decouple protection from allocation} DRAM is organized by 
 page table in the operating system. This means both the allocation and
-protection of DRAM is at page-level granularity. However, this not flexible
+protection of DRAM is at page-level granularity. However, this is not flexible
 enough to manage NVMM. If we store multiple files smaller than page size,
-page-level protection means they cannot reside in the same page and hence
+page-level protection means they cannot reside in the same page and
 the space is wasted. A big file which spans multiple pages have a single
 access permission, and enforce the protection to each page is also a waste.
 Decouple the protection from allocation makes NVMM management much more
@@ -82,7 +82,7 @@ than as a kernel-level service. All the naming and indexing should be provided
 in user-mode, the kernel is responsible only for NVMM protection and permission
 management.
 
-Currently NVMM researches are focused on single machine system. However,
+Currently NVMM researches focus on single machine system. However,
 we believe NVMM can have its place on distributed systems.
 RAMCloud~\cite{RAMCloud} proposes a data center with all the data reside in DRAM, but it still needs to write the data back in disk in case of crash recovery.
 With NVMM, that is not necessary. Mojim~\cite{mojim} claims that the NVMM page

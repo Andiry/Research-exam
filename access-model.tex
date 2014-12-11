@@ -47,10 +47,10 @@ creates a lightweight system that exposes the performance of the
 non-volatile memories and also ensures safety in the presence of
 application and system failures by avoiding common programming errors.
 It provides safe access to persistent objects with pointer safety and
-flexible ACID transactions, and makes persistent objects easy to program.
+flexible ACID transactions and makes persistent objects easy to program.
 
 \nvh{} is implemented as a C++ library under Linux. It manages
-the NVMM with a memory allocator, and uses a gabbage collector to recycle
+the NVMM with a memory allocator and uses a gabbage collector to recycle
 persistent objects. It also provides transaction support and atomic sections 
 to provide concurrency and consistency against system failure.
 
@@ -82,7 +82,7 @@ proposed by BPFS.
  Application must explicitly declare persistent objects in
 \nvh{} and access the objects with caution. This adds overhead to the
 programming but \nvh{} exerts to export simple interface for programmer
-and hide the details.
+and hides the details.
 
 \textbf{\mnem{}}~\cite{mnemosyne}
  also addresses the management and persistency issue
@@ -97,14 +97,14 @@ updates of persistent objects. \mnem{} does not provide type-safe pointers
 and gabbage collection that \nvh{} provides, but it does not require
 modification to the processor.
 
-To bypass the CPU cache and makes writes to NVMM consistent, \mnem{} uses
+To bypass the CPU cache and make writes to NVMM consistent, \mnem{} uses
 \emph{write-through stores} that writes data to NVMM directly. It also
 uses \emph{fense} to provide write ordering and \emph{flush} to flush
 cacheline to the NVMM. \mnem{} uses redo logging to provide transaction support
 as it does not require write ordering to log before every memory update.
 
 \mnem{} consists of three parts: a kernel module to expose and virtualize NVMM, 
-libraries to implement persistent regions and transaction system, and
+libraries to implement persistent regions and transaction system and
 a compiler to support persistent variables and transactions. To use \mnem{},
 programmer uses \texttt{pstatic} to declare a persistent variable in the NVMM,
 and calls \texttt{pmap} to tell \mnem{} to allocate persistent regions in NVMM
@@ -130,9 +130,9 @@ makes it possible to rollback to earlier persistent versions during crash
 recovery.
 
 CDDS uses a combination of \texttt{mfence} and \texttt{clflush} to make sure
-data in CPU cache is written to NVMM persistently, just like other systems.
-However, it does not use logs to provide transaction guarantees. In the B-tree
-created by CDDS, each node has a start version and end version, to show the
+data in CPU cache is written to NVMM persistently.
+In the B-tree
+created by CDDS, each node has a start version and end version to show the
 life period of the node. When a node is created, its start version is set
 to the current B-tree version. When an update to the B-tree makes the node
 not alive, the end version is set to the B-tree version accordingly.
@@ -141,7 +141,7 @@ a new version, and read only returns the newest version. A garbage collector
 is running in background, eliminates those dead data and clear space for
 new data. During crash recovery, nodes newer than the most recent consistent
 version are removed and the older nodes are recursively for partial updates,
-make sure the tree is indentical to the most consistent version.
+make sure the tree is identical to the most consistent version.
 
 CDDS shows the version-based design of the data structure on persistent
 memory. However, the implementation is complicated and specific. We still
@@ -157,14 +157,15 @@ All these operations introduce overhead and undermine NVMM performance.
 \textbf{Summary} NVMM programming models try to provide
 applications with light-weight, easy-to-use, persistent object frameworks.
  They use the same technologies in NVMM file systems to provide atomicity and
-consistency, such as fence, clflush, logging and shadow paging,
-but unlike NVMM file systems which are sitting in the kernel and provide
+consistency, such as fence, clflush, logging and shadow paging.
+But unlike NVMM file systems which are sitting in the kernel and provide
 legacy POSIX file interface, works on NVMM progamming models are implemented
 as user space libraries, grant user applications direct access to NVMM
 to reduce latency.
 
-These works do not provide a standard interface for applications. To use
-them, applications need to be modified accordingly, adds extra programming
+The works of NVMM programming model do not provide a standard interface for
+applications. To use the works,
+applications need to be modified accordingly, adds extra programming
 efforts. We hope that there will be a NVMM access API standard which both
 applications and NVMM system software can follow, and it will make life 
 much easier for programmers.

@@ -3,9 +3,10 @@
 
 Besides the major NVMM works we have introduced, 
 there are NVMM systems designed from
-different perspectives. For exmaple, some works rely more on hardware support
-to reduce system overhead, and some focus on NVMM protection.
-In this section we will talk about miscellaneous works
+different perspectives. For example, some works eliminate CPU cache flushing
+with hardware support, and some others focus on protecting NVMM from malicious
+writes.
+In this section we will introduce miscellaneous works
 on NVMM system software design.
 
 \subsection{Eliminate the consistency/atomicity overhead} 
@@ -39,14 +40,15 @@ on NVMM system software design.
 \end{table}
 
 Table~\ref{table:comparison} lists the mechanisms adoption status of some
-systems we have introduced. Almost all the NVMM systems rely on logging or
+of the systems we have introduced.
+Almost all the NVMM systems rely on logging or
 copy-on-write to provide atomicity, and clflush and/or mfence to guarantee
 consistency. Both of them add overhead to NVMM system software: logging doubles
 the writes, copy-on-write amplifies the writes, and CPU cache flushing is
 expensive~\cite{CPUcaching}. Some works eliminate the software overhead of
 consistency and atomicity with hardware assistance.
 \textbf{WrAP}~\cite{WrAP} avoids explicit CPU cache flushing by disabling
-cache flushes to NVMM, and updates to the actual address are done by logging.
+cache flushes to NVMM, and updates the actual address by logging.
 
 \textbf{Kiln}~\cite{Kiln} provides a persistent memory design
  that adopts a non-volatile
@@ -73,7 +75,7 @@ it does not require any software modification such as NV-heaps~\cite{nvheaps}
 
 WSP consists of NVMM devices, a hardware power monitor, and software suspend/resume routines. When the WSP system fails, the hardware power monitor triggers
 an interrupt to the CPU core. All the CPU cores flush their cache lines to the 
-NVMM and then halts. On the recovery, resume routine does the inverse to recover
+NVMM and then halt. On the recovery, resume routine does the inverse to recover
 the system to the consistent state. As WSP eliminates the runtime persistency
 operations, it shows good performance comparing to NV-heaps.
 
@@ -170,7 +172,7 @@ TLB flush and performance is bad. Buffer the write requests and commit
 them as a batch helps to improve the performance for sequential writes,
 but not for random writes. The author finds out the best solution is 
 \emph{private mapping}: NVMM pages are mapped to virtual space only when
-required and unmapped after write finishes. Evaluation shows private
+required and unmapped when write finishes. Evaluation shows private
 mapping provides 90\% bandwidth of the optimal case. Private mapping
 addes overhead for each write request, but reduces page table size and
 TLB pollution.
@@ -211,7 +213,7 @@ writes, CDSMM puts important information in DRAM and sync to NVMM only required.
 
 \textbf{CDSMM}~\cite{CDSMM} presents the MMU design for NVMMs, focuses on
 security and protection. It protects NVMM pages with system call
-\texttt{mprotect}, but performs it in a batch way so that to reduce mode
+\texttt{mprotect}, but performs it in a batch way so as to reduce mode
 switch overhead, kernel structure modifying overhead and TLB flushes.
 CDSMM also does a software wear-leveling by always allocating new blocks
 rather than reusing old freed blocks to average the writes to each block.
@@ -241,8 +243,10 @@ to integrate the design in applications is still difficult.
 As NVMM has a lower endurance than DRAM, frequent writes will wear out
 NVMM in a few years and makes it unusable. Without wear leveling, the lifetime
 of a PCM based NVMM is just 0.5 to 3 years. This is unacceptable in a real
-system. ~\cite{PCMHierarchy} introduces write line random shifting to uniform
-the writes. ~\cite{PCM_EfficientMainMemory} tracks the redundant bit-writes to
+system. Qureshi et al.~\cite{PCMHierarchy} introduces write line random
+shifting to uniform
+the writes. Zhou et al.~\cite{PCM_EfficientMainMemory} tracks the redundant
+bit-writes to
 eliminate the writes that do not change the value. It also uses byte-level row
 shifting to rotate the writes at fine-grained granularity, as well as segment
 swapping at coarse-grained granularity.
@@ -256,7 +260,8 @@ Third, Software wear leveling cannot be more efficient
 than a hardware solution. We conclude that NVMM wear leveling should be
 implemented in hardware. Start-Gap~\cite{startgap1} is a simple and effective
 wear leveling technique for PCM-based NVMM. It uses only two registers and
-makes NVMM robust to malicious attacks. \cite{secrefresh} and \cite{freep}
+makes NVMM robust to malicious attacks. Security refresh~\cite{secrefresh} and
+Free-p~\cite{freep}
 are another two hardware solutions to balance the writes to PCM and improve
 lifetime.
 

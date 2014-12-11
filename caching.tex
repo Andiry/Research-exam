@@ -5,12 +5,11 @@ As NVMM outperforms traditional storage devices with low latency and high
 bandwidth, build a persistent cache for slower storage devices and
 accelerate the file access is a good usage of NVMM. 
 
-\textbf{Rio}~\cite{riofilecache} uses battery-backed memory to build a
+\textbf{Rio}~\cite{riofilecache} uses battery-backed memory to build an
 operating system
-with better performance and able to recovery from crash. Rio stores regular
-files in the unified buffer cache on the NVMM, and recover the files
-during system recovery.
-To prevent the file
+with better performance and is able to recovery from crash. Rio stores regular
+files in the unified buffer cache on the NVMM and recover the files
+during system recovery. To prevent the file
 cache from corrupt during system failure, Rio turns off the write-permission
 bits in the page table for all file cache pages, only enable it during page
 writing. Rio also disables the ability of the processor to bypass the TLB,
@@ -150,7 +149,7 @@ performance.
 }
 
 \DAChell{} divides file into 2MB chunks as \texttt{mmap()} unit. This
-reduces the number of \texttt{mmap()} operations, and perform well as 
+reduces the number of \texttt{mmap()} operations and performs well as 
 a prefetch mechanism for small sequential requests.  
 \DAChell{} issues \texttt{mmap()} with the MAP\_POPULATE flag set to force the
 kernel to
