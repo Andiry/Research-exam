@@ -175,7 +175,12 @@ Although using NVMM as system memory and access them like DRAM is simple,
 this approach does not exploit the persistence property of NVMM. Also, the
 high write latency and limited endurance comparing to DRAM makes NVMM not
 suitable to replace DRAM direcly, and system software is necessary to
-manage the NVMM.
+manage the NVMM. Researchers have proposed overview of NVMM system designs.
+Bailey et al.~\cite{systemimplications} shows the implications for a NVMM-only
+system, and Trivedi et al.\cite{onestack}  examines the
+properties of high-performance networking software stacks 
+and proposes an unified I/O stack that deal with
+network, local NVMM and remote NVMM under a common framework.
 
 Numerous works propose different system software designs to
 manage the NVMM. Figure~\ref{fig:nvmmstack} shows the typical NVMM system

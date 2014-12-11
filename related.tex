@@ -1,6 +1,16 @@
 \section{Miscellaneous works} 
 \label{sec:related}
 
+Besides the major NVMM works we have introduced, 
+there are NVMM systems designed from
+different perspectives. For exmaple, some works rely more on hardware support
+to reduce system overhead, and some focus on NVMM protection.
+In this section we will talk about miscellaneous works
+on NVMM system software design.
+
+\subsection{Eliminate the consistency/atomicity overhead} 
+\label{sec:systemdesign}
+
 \begin{table}
 	\resizebox{\linewidth}{!}{
 	\footnotesize
@@ -28,20 +38,46 @@
 	\label{table:comparison}
 \end{table}
 
-We have seen the major categories of NVMM software.
 Table~\ref{table:comparison} lists the mechanisms adoption status of some
 systems we have introduced. Almost all the NVMM systems rely on logging or
 copy-on-write to provide atomicity, and clflush and/or mfence to guarantee
-consistency. (Rio Vista does not mention using clflush or mfence, but we believe
-it should.)
+consistency. Both of them add overhead to NVMM system software: logging doubles
+the writes, copy-on-write amplifies the writes, and CPU cache flushing is
+expensive~\cite{CPUcaching}. Some works eliminate the software overhead of
+consistency and atomicity with hardware assistance.
+\textbf{WrAP}~\cite{WrAP} avoids explicit CPU cache flushing by disabling
+cache flushes to NVMM, and updates to the actual address are done by logging.
 
-Other than the works we have introduced, there are NVMM systems designed from
-different perspectives. In this section we will talk about miscellaneous works
-on NVMM system software design.
+\textbf{Kiln}~\cite{Kiln} provides a persistent memory design
+ that adopts a non-volatile
+cache and a non-volatile main memory to enable atomic in-place updates without
+logging or copy-on-write. Kiln moves the transaction commitment to the NV
+cache layer, all the data are resided inside CPU cache (including last level
+NV cache) before committed. When commit a transaction, Kiln flushes all
+the dirty lines in volatile cache to NV cache, and then change the states of
+NV cache lines to committed. Committed NV cache lines are persistent and
+can be flushed to NVMM. Kiln has a similar programming interface as NV-Heaps
+and Mnemosyne, but the majority contribution is the NV cache layer.
 
-\subsection{System design impact} 
-\label{sec:systemdesign}
+\textbf{WSP}~\cite{WSP} stands for whole-system persistence.
+ It aims at systems where
+all memory is NVMM, and it transparently recovers an application's entire state,
+making a system failure appear as a suspend/resume event. WSP does not
+do anything about logging or explicit CPU cache flushing; instead, it does 
+\emph{flush-on-fail}, which flushes CPU registers and cache lines to NVMM
+on system failure, using a small residual energy window provided by system
+power supply. As WSP does not flush during normal operations, it eliminates
+the runtime overhead of flushing CPU cache lines on each update entirely, also
+it does not require any software modification such as NV-heaps~\cite{nvheaps}
+ and Mnemosyne~\cite{mnemosyne}.
 
+WSP consists of NVMM devices, a hardware power monitor, and software suspend/resume routines. When the WSP system fails, the hardware power monitor triggers
+an interrupt to the CPU core. All the CPU cores flush their cache lines to the 
+NVMM and then halts. On the recovery, resume routine does the inverse to recover
+the system to the consistent state. As WSP eliminates the runtime persistency
+operations, it shows good performance comparing to NV-heaps.
+
+\ignore{
 Some works give a overview of NVMM system and proposes software
 design suggestions.
 Bailey et al.~\cite{systemimplications} shows the implications for a NVMM-only
@@ -56,8 +92,9 @@ hardware access, operating system bypass and zero copy data movement,
 points out that the I/O stack for NVMM should leverage from the mature and
 stable networking stack, and proposes an unified I/O stack that deal with
 network, local NVMM and remote NVMM under a common framework.
+}
 
-
+\ignore{
 \subsection{Hardware/Software co-design} 
 \label{sec:hwswdesign}
 
@@ -91,18 +128,9 @@ SoftWrAP
 uses alias update, routes the cache entries to write to a different location
 without affecting the original data. SoftWrAP achieves the same persistent
 guarantee as WrAP without hardware modification, but not as efficient as WrAP.
+}
 
-\textbf{Kiln}~\cite{Kiln} provides a persistent memory design
- that adopts a non-volatile
-cache and a non-volatile main memory to enable atomic in-place updates without
-logging or copy-on-write. Kiln moves the transaction commitment to the NV
-cache layer, all the data are resided inside CPU cache (including last level
-NV cache) before committed. When commit a transaction, Kiln flushes all
-the dirty lines in volatile cache to NV cache, and then change the states of
-NV cache lines to committed. Committed NV cache lines are persistent and
-can be flushed to NVMM. Kiln has a similar programming interface as NV-Heaps
-and Mnemosyne, but the majority contribution is the NV cache layer.
-
+\ignore{
 \subsection{Recovery} 
 \label{sec:recovery}
 
@@ -115,24 +143,7 @@ RVM becomes very simple and easy to use. RVM manages recoverable memory in
 segments, each with a file or a disk partition as backing store. Applications
 calls the interfaces provided by RVM to begin and commit transactions. RVM
 uses a undo/redo logging strategy to make the persistency guarantee. 
-
-\textbf{WSP}~\cite{WSP} stands for whole-system persistence.
- It aims at systems where
-all memory is NVMM, and it transparently recovers an application's entire state,
-making a system failure appear as a suspend/resume event. WSP does not
-do anything about logging or explicit CPU cache flushing; instead, it does 
-\emph{flush-on-fail}, which flushes CPU registers and cache lines to NVMM
-on system failure, using a small residual energy window provided by system
-power supply. As WSP does not flush during normal operations, it eliminates
-the runtime overhead of flushing CPU cache lines on each update entirely, also
-it does not require any software modification such as NV-heaps~\cite{nvheaps}
- and Mnemosyne~\cite{mnemosyne}.
-
-WSP consists of NVMM devices, a hardware power monitor, and software suspend/resume routines. When the WSP system fails, the hardware power monitor triggers
-an interrupt to the CPU core. All the CPU cores flush their cache lines to the 
-NVMM and then halts. On the recovery, resume routine does the inverse to recover
-the system to the consistent state. As WSP eliminates the runtime persistency
-operations, it shows good performance comparing to NV-heaps.
+}
 
 \ignore{
 A remaining issue of WSP is device recovery. As the device drivers are restored
