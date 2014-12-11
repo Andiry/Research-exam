@@ -2,7 +2,7 @@
 \begin{abstract}
 
 Non-volatile memories such as Phase Change Memory, Spin-Torque Transfer RAM
-and Memristor memory are appearing on the horizon and soon they will sit on the
+and Memristor are appearing on the horizon and soon they will sit on the
 processor memory bus. These Non-volatile Main Memories (NVMM)
  will allow software to access persistent data with
 extremely low latency and high bandwidth. However, existing storage
@@ -10,15 +10,15 @@ architectures introduce significant overhead that can dominate the low-latency
 of persistent memories. As a matter of fact, new software accessing models
 are required to exploit the performance of NVMM.
 
-Besides, using NVMM as persistent memory is a simple solution
- and provide good
- performance, but current CPU cache hierarchy and write reordering compromises
-the persistency of NVMM, and the slow latency and short endurance comparing
+Besides, although accessing NVMM as persistent memory is a simple solution
+ and provides good
+ performance, current CPU cache hierarchy and write reordering compromise
+the persistency of NVMM, and the slow latency and short endurance compared
 to DRAM requires special system software design for NVMM.
 
-In this paper, we investigate the different software solutions to exploit
+In this paper, we investigate different software solutions to exploit
 the performance potential of NVMM as well as its persistent property.
-We divide the approaches into four major categories: file system,
+We divide approaches into four major categories: file system,
 programming model, DRAM extensions and caching and acceleration. We
 examine each category,  specify the challenges and opportunities NVMM brings
 to system software design.
